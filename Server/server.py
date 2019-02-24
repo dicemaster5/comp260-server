@@ -1,5 +1,5 @@
 import sys
-# from queue import *
+from queue import *
 # from commands import *
 import time
 import socket
@@ -14,35 +14,58 @@ output: str = "null"
 
 serverIsRunning: bool = True
 
-#inputQueue = Queue()
+globalInputQueue = Queue()
 #outputQueue = Queue()
 
+players = []
 clients = {}
 clientsLock = threading.Lock()
-
-players = {}
 
 # ========================= THREADING CODE ====================== #
 
 def acceptThread(serverSocket):
     print("acceptThread running")
     while True:
-
-
         newSocket = serverSocket.accept()[0]
         newClient = client(newSocket)
 
-        print("Added client!")
-        #clientsLock.acquire()
-        #clients[newClient.clientSocket] = 0
-        #clientsLock.release()
+        clientsLock.acquire()
+        players.append(newClient)
+        clients[newClient.clientSocket] = 0
+        clientsLock.release()
 
+        print("Added client!")
 
 # =================== INPUT PROCESSING ========================= #
 
-#def InputCommands(Input, client):
-#    if Input == "Help":
+# Check all the Inputs coming in or each player
+def checkInputs():
+    for player in players:
+        if player.inputQueue.qsize() > 0:
+            print("Checking Inputs")
 
+            Input = player.inputQueue.get()
+
+            if Input == "help":
+                player.outputQueue.put("--HELP COMMAND--\n say [words] - to say something to every other player\n newname [name] - To change your name")
+
+            else:
+                Input = Input.split(" ", 1)
+                if Input[0] == "say":
+                    sendToEveryone(player.playerName + " said " + Input[1])
+
+                elif Input[0] == "newname":
+                    player.outputQueue.put("Your name was changed from " + player.playerName + " to " + Input[1])
+                    player.playerName = Input[1]
+
+                else:
+                    player.outputQueue.put("--INVALID COMMAND--")
+
+
+# Send a message to every player
+def sendToEveryone(message):
+    for player in players:
+        player.outputQueue.put(message)
 
 
 # =================== MAIN ========================= #
@@ -57,10 +80,10 @@ if __name__ == '__main__':
     acceptThread.start()
 
     # Main Loop
-    #while serverIsRunning:
+    while serverIsRunning:
+        checkInputs()
         #while inputQueue.qsize() > 0:
-            #clientMessage = inputQueue.get()
-            #print(clientMessage)
+        #   print("hi")
 
 ######################################
 

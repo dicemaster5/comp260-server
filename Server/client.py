@@ -1,15 +1,17 @@
 from queue import *
 import threading
 import socket
+
 class client:
-
-
     # Init function
     def __init__(self, clientSocket):
         self.inputQueue = Queue()
+        self.outputQueue = Queue()
         self.clientSocket = clientSocket
+
         self.clientID = ""
         self.playerName = "Roger"
+        self.position:str = "Main Deck"
 
 
         clientReceiveThread = threading.Thread(target=client.receiveThread, args=(self,))
@@ -32,28 +34,27 @@ class client:
 
             except socket.error:
                 canReceive = False
-                print("receiveThread: Lost client!")
+                print("receiveThread: ERROR - Lost client")
 
     def sendingThread(self):
         print("sendingThread running")
         canSend = True
         while canSend:
             try:
-                if self.inputQueue.qsize() > 0:
-                    inputMeassage = self.inputQueue.get()
+                if self.outputQueue.qsize() > 0:
+                    # Get the output message to be sent
+                    outputMeassage = self.outputQueue.get()
 
-                    if inputMeassage == "help":
-                        stringMessage = "--HELP COMMAND--"
-                        self.clientSocket.send(stringMessage.encode())
+                    # Send message to the player
+                    self.clientSocket.send(outputMeassage.encode("utf-8"))
 
-                        print("Sending: " + stringMessage)
-
-                    else:
-                        stringMessage = (inputMeassage + ": Is not a valid Command!")
-                        self.clientSocket.send(stringMessage.encode())
-
-                        print("Sending: " + stringMessage)
+                    print(self.playerName + " is Sending: " + outputMeassage)
 
             except socket.error:
                 canSend = False
-                print("sendingThread: Lost client!")
+                print("sendingThread: ERROR - Lost client")
+
+# ========================= PLAYER FUNCTIONS CODE ====================== #
+
+    def addToOutQueue(self, message):
+        self.outputQueue.put(message)
