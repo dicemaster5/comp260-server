@@ -50,11 +50,6 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         # When enter is pressed in input box.
         self.UserInputBox.returnPressed.connect(lambda: self.EnterInputText())
 
-
-# Test function to print stuff ====== REMOVE LATER
-    def PrintStuff(self):
-        print("Clicking button")
-
     def EnterInputText(self):
         self.newInput = self.UserInputBox.text().lower()
         print("User input submitted")
