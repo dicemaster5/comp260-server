@@ -4,9 +4,23 @@ import threading
 import time
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 
-clientIsRunning:bool = True
-newInput:str
+clientIsRunning: bool = True
+newInput: str
 
+class ClientData:
+    def __init__(self):
+        self.serverSocket = None
+        self.connectedToServer = False
+        self.running = True
+        self.incomingMessage = ""
+        self.currentBackgroundThread = None
+        self.currentReceiveThread = None
+        self.currentSendThread = None
+        self.userName = ""
+
+
+clientData = ClientData()
+clientDataLock = threading.Lock()
 
 # ========================= PYQT WINDOW CODE ====================== #
 
@@ -46,25 +60,80 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         print("User input submitted")
         print(self.newInput)
 
+        # Send to the server!!!
+        sendFunction(self.newInput)
+
         self.DisplayText(self.newInput)
         self.UserInputBox.setText("")
 
     def DisplayText(self, text):
         self.textDisplay.append(text)
 
+def sendFunction(newInput):
+    clientData.serverSocket.send(newInput.encode())
 
 # ========================= THREADING CODE ====================== #
 
-def sendThread(clientData):
+def sendThread(clientData, MyApp):
     print("sendThread running")
+    MyApp.EnterInputText()
+    newInput = "poop!"
+    clientData.serverSocket.send(newInput.encode())
+    print("Sent: " + newInput + " To the server")
 
-
-def receiveThread(clientData):
+def receiveThread(clientData, MyApp):
     print("receiveThread running")
 
+    while clientData.connectedToServer is True:
+        try:
+            data = clientData.serverSocket.recv(4096)
+            text = ""
+            text += data.decode("utf-8")
+            clientDataLock.acquire()
+            clientData.incomingMessage += text
+            clientDataLock.release()
+            print("Text Received: " + text)
 
-def backgroundThread(clientData):
+            # Display text received to the UI text box
+            MyApp.DisplayText(text)
+
+        except socket.error:
+            print("Server lost")
+            MyApp.DisplayText("Server lost")
+            clientData.connectedToServer = False
+            clientData.serverSocket = None
+
+
+def backgroundThread(clientData, MyApp):
     print("backgroundThread running")
+    clientData.connectedToServer = False
+
+    while (clientData.connectedToServer is False) and (clientData.running is True):
+        try:
+
+            if clientData.serverSocket is None:
+                clientData.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            if clientData.serverSocket is not None:
+                clientData.serverSocket.connect(("127.0.0.1", 8222))
+
+            clientData.connectedToServer = True
+            clientData.currentReceiveThread = threading.Thread(target=receiveThread, args=(clientData, MyApp,))
+            clientData.currentReceiveThread.start()
+
+            print("connected")
+            MyApp.DisplayText("Server Connected")
+
+            while clientData.connectedToServer is True:
+                time.sleep(1.0)
+
+
+        except socket.error:
+            print("no connection")
+            time.sleep(1)
+            clientDataLock.acquire()
+            clientData.incomingMessage = "\nNoServer"
+            clientDataLock.release()
 
 
 # =================== MAIN ========================= #
@@ -75,14 +144,15 @@ if __name__ == "__main__":
         app = QtWidgets.QApplication(sys.argv)
 
         # Create and show qtWindow
-        window = MyApp(app)
+        window = MyApp(None)
         window.show()
 
         # main()
+        clientData.currentBackgroundThread = threading.Thread(target=backgroundThread, args=(clientData, window))
+        clientData.currentBackgroundThread.start()
 
         # Event loop
         sys.exit(app.exec_())
-        clientIsRunning = False
 
 """
 import sys

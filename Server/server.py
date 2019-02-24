@@ -159,14 +159,33 @@ client = 0
 
 serverIsRunning: bool = True
 
+messageQueue = Queue()
+
 clients = {}
 clientsLock = threading.Lock()
 
 
-########################THREADING CODE########################
+######################## THREADING CODE ########################
 
+def receiveThread(client):
+    print("receiveThread running")
+    canReceive = True
+    while canReceive:
+        try:
+            data = client.recv(4096)
+            text = ""
+            text += data.decode("utf-8")
+
+            messageQueue.put((client, text))
+
+            #print("Receiving: " + text)
+
+        except socket.error:
+            canReceive = False
+            print("receiveThread: Lost client!")
 
 def acceptThread(serverSocket):
+    print("acceptThread running")
     while True:
         new_client = serverSocket.accept()
         print("Added client!")
@@ -174,26 +193,13 @@ def acceptThread(serverSocket):
         clients[new_client[0]] = 0
         clientsLock.release()
 
-def receiveThread(serverSocket):
+        newReceiveThread = threading.Thread(target=receiveThread, args=(new_client[0],))
+        newReceiveThread.start()
+
+
+def sendingThread(serverSocket, clients):
+    print("sendingThread running")
     while True:
-        #print("looking for message from client")
-        clientsLock.acquire()
-
-        clientsLock.release()
-
-if __name__ == '__main__':
-    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    mySocket.bind(("127.0.0.1", 8222))
-    mySocket.listen(5)
-
-    myThread = threading.Thread(target=acceptThread, args=(mySocket, ))
-    myThread.start()
-
-    receivingThread = threading.Thread(target=receiveThread, args=(mySocket, ))
-    receivingThread.start()
-
-    while serverIsRunning:
         lostclients = []
 
         clientsLock.acquire()
@@ -205,19 +211,35 @@ if __name__ == '__main__':
 
                 print("Sending: " + testString)
 
-                data = client.recv(4096)
-                print(data.decode("utf-8"))
-
             except socket.error:
                 lostclients.append(client)
-                print("Lost client!")
+                print("Sending: Lost client!")
 
         for client in lostclients:
             clients.pop(client)
 
         clientsLock.release()
 
-        time.sleep(0.5)
+        time.sleep(2)
+
+if __name__ == '__main__':
+    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    mySocket.bind(("127.0.0.1", 8222))
+    mySocket.listen(5)
+
+    acceptThread = threading.Thread(target=acceptThread, args=(mySocket, ))
+    acceptThread.start()
+
+    sendingThread = threading.Thread(target=sendingThread, args=(mySocket, clients))
+    sendingThread.start()
+
+    while serverIsRunning:
+        while messageQueue.qsize() > 0:
+            clientMessage = messageQueue.get()
+            print(clientMessage[0])
+            print(clientMessage[1])
+
 ######################################
 
 """
