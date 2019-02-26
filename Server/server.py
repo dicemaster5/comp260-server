@@ -6,6 +6,8 @@ import socket
 import threading
 from client import client
 
+import spaceShip
+
 #########
 playerName: str
 userInput: str
@@ -14,12 +16,17 @@ output: str = "null"
 
 serverIsRunning: bool = True
 
-globalInputQueue = Queue()
+#globalInputQueue = Queue()
 #outputQueue = Queue()
 
 players = []
 clients = {}
 clientsLock = threading.Lock()
+
+# Main space Ship of the game
+ship = spaceShip.ship
+ship.generateShip(spaceShip.ship, "SpaceShipGOGO")
+
 
 # ========================= THREADING CODE ====================== #
 
@@ -27,10 +34,11 @@ def acceptThread(serverSocket):
     print("acceptThread running")
     while True:
         newSocket = serverSocket.accept()[0]
-        newClient = client(newSocket)
+        newClient = client(newSocket, ship)
 
         clientsLock.acquire()
         players.append(newClient)
+        ship.players = players
         clients[newClient.clientSocket] = 0
         clientsLock.release()
 
@@ -38,25 +46,48 @@ def acceptThread(serverSocket):
 
 # =================== INPUT PROCESSING ========================= #
 
+
 # Check all the Inputs coming in or each player
 def checkInputs():
     for player in players:
         if player.inputQueue.qsize() > 0:
             print("Checking Inputs")
 
-            Input = player.inputQueue.get()
+            Input = player.inputQueue.get().lower()
 
             if Input == "help":
-                player.outputQueue.put("--HELP COMMAND--\n say [words] - to say something to every other player\n newname [name] - To change your name")
+                player.outputQueue.put(
+                                        "----------- COMMANDS LIST -----------\n"
+                                        "help - lists all the commands\n"
+                                        "say [words] - to say something to every other players\n"
+                                        "newname [name] - To change your name\n"
+                                        "look - to get a description of the room you are currently in\n"
+                                        "move [front, back, left, right] - to move in the room in the corresponding "
+                                        "direction\n"
+                                        "-------------------------------------\n"
+                                       )
+            elif Input == "look":
+                player.outputQueue.put(player.currentRoom.description)
+
+            elif Input == "shipname":
+                player.outputQueue.put(player.currentSpaceShip.name)
 
             else:
                 Input = Input.split(" ", 1)
                 if Input[0] == "say":
-                    sendToEveryone(player.playerName + " said " + Input[1])
+                    sendToEveryone(player.playerName + " said: " + Input[1])
 
                 elif Input[0] == "newname":
                     player.outputQueue.put("Your name was changed from " + player.playerName + " to " + Input[1])
                     player.playerName = Input[1]
+
+                elif Input[0] == "move":
+                    directions = ["front", "back", "left", "right"]
+                    player.moveToRoom(directions.index(Input[1]))
+                    player.outputQueue.put("You have moved to: " + player.currentRoom.name)
+
+                    #print(player.currentRoom.connectedRooms)
+
 
                 else:
                     player.outputQueue.put("--INVALID COMMAND--")
@@ -82,102 +113,3 @@ if __name__ == '__main__':
     # Main Loop
     while serverIsRunning:
         checkInputs()
-        #while inputQueue.qsize() > 0:
-        #   print("hi")
-
-######################################
-
-"""
-def sendOutput(outPutMessage: str):
-    print("Sending Output Message: " + "|" + outPutMessage + "|")
-    client[0].send(outPutMessage.encode())
-
-
-def recievedInput():
-    data = client[0].recv(4096)
-    global userInput
-    userInput = (data.decode("utf-8"))
-    print("Received Input Message: " + "|" + userInput + "|")
-
-
-def go():
-    sendOutput("which direction will you go in?:")
-    sendOutput("NORTH/SOUTH/EAST/WEST")
-    recievedInput()
-    if userInput == "north":
-        sendOutput("You enter the room to the north.")
-
-
-def look():
-    sendOutput("You are in a small room.")
-
-
-def help():
-    sendOutput ("*-------------------------------------------*\n"
-                "Here is the List of commands you can enter\n"
-                "go: to go to a new location/room\n"
-                "look: to get a description of your environment\n"
-                "help: to get a list of all the commands you can enter\n"
-                "*-------------------------------------------*")
-
-
-def idle():
-    sendOutput("What do you do?:")
-    recievedInput()
-    if userInput == "go":
-        # List rooms to go to function
-        go()
-        idle()
-
-    elif userInput == "look":
-        # Describe the room function
-        look()
-        idle()
-
-    elif userInput == "help":
-        help()
-        idle()
-
-    else:
-        sendOutput("ERROR: incorrect input")
-        idle()
-
-
-if __name__ == '__main__':
-
-    isRunning = True
-    isConnected = False
-
-    client = 0
-
-    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mySocket.bind(("127.0.0.1", 8222))
-    mySocket.listen(5)
-
-    while isRunning == True:
-        if isConnected == False:
-            print("Waiting for client ...")
-            client = mySocket.accept()
-
-            try:
-                data = client[0].recv(4096)
-                print(data.decode("utf-8"))
-
-                isConnected = True
-                print("Client connected")
-
-                userInput = data.decode("utf-8")
-
-            except socket.error:
-                isConnected = False
-
-        while isConnected == True:
-
-            try:
-                idle()
-
-            except socket.error:
-                isConnected = False
-                client = None
-                print("Client lost")
-"""

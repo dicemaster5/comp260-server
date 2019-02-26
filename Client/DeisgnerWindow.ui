@@ -9,12 +9,31 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>512</width>
+    <width>1000</width>
     <height>810</height>
    </rect>
   </property>
+  <property name="maximumSize">
+   <size>
+    <width>1000</width>
+    <height>817</height>
+   </size>
+  </property>
+  <property name="cursor">
+   <cursorShape>ArrowCursor</cursorShape>
+  </property>
   <property name="windowTitle">
    <string>Game Window</string>
+  </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: qlineargradient(spread:pad, x1:1, y1:1, x2:1, y2:0, stop:0 rgba(38, 43, 58 255), stop:1 rgba(61, 67, 84, 255));
+font: 8pt &quot;8514oem&quot;;</string>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLineEdit" name="UserInputBox">
@@ -22,9 +41,14 @@
      <rect>
       <x>10</x>
       <y>760</y>
-      <width>411</width>
-      <height>22</height>
+      <width>461</width>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:rgb(84, 84, 84);
+color:white;
+font: 8pt &quot;8514oem&quot;;</string>
     </property>
    </widget>
    <widget class="QTextBrowser" name="textDisplay">
@@ -32,29 +56,72 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>491</width>
+      <width>571</width>
       <height>741</height>
      </rect>
     </property>
     <property name="autoFillBackground">
      <bool>false</bool>
     </property>
+    <property name="styleSheet">
+     <string notr="true">color: white;
+font: 8pt &quot;8514oem&quot;;</string>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'8514oem'; font-size:8pt; font-weight:400; font-style:normal;&quot; bgcolor=&quot;#3f3f3f&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; color:#ffffff;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
    </widget>
    <widget class="QPushButton" name="InputButton">
     <property name="geometry">
      <rect>
-      <x>430</x>
+      <x>480</x>
       <y>760</y>
-      <width>71</width>
-      <height>21</height>
+      <width>101</width>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:rgb(75, 75, 75);
+color: white;
+font: 6pt &quot;8514oem&quot;;</string>
     </property>
     <property name="text">
      <string>Send</string>
     </property>
    </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>30</y>
+      <width>281</width>
+      <height>481</height>
+     </rect>
+    </property>
+    <property name="lineWidth">
+     <number>10</number>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap>../SpaceShipImage.png</pixmap>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+    <property name="wordWrap">
+     <bool>false</bool>
+    </property>
+   </widget>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>

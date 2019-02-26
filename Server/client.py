@@ -1,26 +1,45 @@
 from queue import *
 import threading
 import socket
+from spaceShip import ship, room
 
 class client:
     # Init function
-    def __init__(self, clientSocket):
+    def __init__(self, clientSocket, spaceShip):
         self.inputQueue = Queue()
         self.outputQueue = Queue()
         self.clientSocket = clientSocket
 
         self.clientID = ""
         self.playerName = "Roger"
-        self.position:str = "Main Deck"
+        self.currentSpaceShip = spaceShip
+        self.currentRoom = self.currentSpaceShip.rooms["Main Deck"]
 
+        self.health = 100
+        self.inventory = {}
 
+        # clientReceiveThread starter
         clientReceiveThread = threading.Thread(target=client.receiveThread, args=(self,))
         clientReceiveThread.start()
 
+        # clientSendingThread starter
         clientSendingThread = threading.Thread(target=client.sendingThread, args=(self,))
         clientSendingThread.start()
 
-# ========================= THREADING CODE ====================== #
+# ========================= PLAYER FUNCTIONS CODE ====================== #
+
+    # adds a new message to the outPutQueue to be sent to the client of this player
+    def addToOutQueue(self, message):
+        self.outputQueue.put(message)
+
+    # Moves the player to a new room
+    def moveToRoom(self, room):
+        newRoom = self.currentRoom.connectedRooms[room]
+        self.currentRoom = self.currentSpaceShip.rooms[newRoom]
+
+        #self.currentSpaceShip.rooms[room]
+
+# ========================= THREADING CODE ============================== #
 
     def receiveThread(self):
         print("receiveThread running")
@@ -53,8 +72,3 @@ class client:
             except socket.error:
                 canSend = False
                 print("sendingThread: ERROR - Lost client")
-
-# ========================= PLAYER FUNCTIONS CODE ====================== #
-
-    def addToOutQueue(self, message):
-        self.outputQueue.put(message)
