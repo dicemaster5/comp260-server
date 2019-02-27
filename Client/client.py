@@ -67,6 +67,7 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def DisplayText(self, text):
         self.textDisplay.append(text)
+        self.textDisplay.moveCursor(QtGui.QTextCursor.End)
 
 
 def sendFunction(newInput):
@@ -133,7 +134,7 @@ def backgroundThread(clientData, MyApp):
             clientDataLock.release()
 
 
-# =================== MAIN ========================= #
+# ========================= MAIN ========================== #
 
 if __name__ == "__main__":
     if clientIsRunning:

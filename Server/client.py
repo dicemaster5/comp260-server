@@ -34,10 +34,7 @@ class client:
 
     # Moves the player to a new room
     def moveToRoom(self, room):
-        newRoom = self.currentRoom.connectedRooms[room]
-        self.currentRoom = self.currentSpaceShip.rooms[newRoom]
-
-        #self.currentSpaceShip.rooms[room]
+        self.currentRoom = room
 
 # ========================= THREADING CODE ============================== #
 

@@ -4,7 +4,7 @@ class room:
         self.description = ""
         self.players = []
         self.interactables = {}
-        self.connectedRooms = []
+        self.connectedRooms = {}
 
     def setRoom(self, roomName, rooms, description):
         self.name = roomName
@@ -24,21 +24,21 @@ class ship:
         cockPit = room()
         cockPit.setRoom(
                         "Cock Pit",
-                        ["", "Main Deck", "", ""],
+                        {"back":"Main Deck"},
                         "You are in the main controls room.\n"
                         "from here you can control an navigate the ship.")
 
         mainDeck = room()
         mainDeck.setRoom(
                         "Main Deck",
-                        ["Cock Pit", "Cargo Haul", "", ""],
+                        {"front":"Cock Pit", "back":"Cargo Haul"},
                         "You are standing in the main deck of the ship.\n"
                         "There are many terminals around you.")
 
         cargoHaul = room()
         cargoHaul.setRoom(
                         "Cargo Haul",
-                        ["Main Deck", "", "", ""],
+                        {"front":"Main Deck"},
                         "You are in the Cargo Haul of the ship.\n"
                         "There are all sorts of worthless treasures in here.")
 

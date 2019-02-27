@@ -25,7 +25,7 @@ clientsLock = threading.Lock()
 
 # Main space Ship of the game
 ship = spaceShip.ship
-ship.generateShip(spaceShip.ship, "SpaceShipGOGO")
+ship.generateShip(spaceShip.ship, "RF-42 Centaur Cargo Ship")
 
 
 # ========================= THREADING CODE ====================== #
@@ -39,6 +39,9 @@ def acceptThread(serverSocket):
         clientsLock.acquire()
         players.append(newClient)
         ship.players = players
+
+        newClient.currentRoom.players.append(newClient)
+
         clients[newClient.clientSocket] = 0
         clientsLock.release()
 
@@ -56,48 +59,75 @@ def checkInputs():
             Input = player.inputQueue.get().lower()
 
             if Input == "help":
-                player.outputQueue.put(
+                player.addToOutQueue(
                                         "----------- COMMANDS LIST -----------\n"
                                         "help - lists all the commands\n"
-                                        "say [words] - to say something to every other players\n"
+                                        "say [words] - to say something to every other in the same room as you\n"
+                                        "radio [words] - to say something to every other players\n"
                                         "newname [name] - To change your name\n"
                                         "look - to get a description of the room you are currently in\n"
                                         "move [front, back, left, right] - to move in the room in the corresponding "
                                         "direction\n"
+                                        "shipname - will return the name of the Space ship\n"
                                         "-------------------------------------\n"
                                        )
             elif Input == "look":
-                player.outputQueue.put(player.currentRoom.description)
+                player.addToOutQueue(player.currentRoom.description)
 
             elif Input == "shipname":
-                player.outputQueue.put(player.currentSpaceShip.name)
+                player.addToOutQueue(player.currentSpaceShip.name)
 
             else:
                 Input = Input.split(" ", 1)
+
                 if Input[0] == "say":
-                    sendToEveryone(player.playerName + " said: " + Input[1])
+                    talkInRoom(player.playerName + " said: " + Input[1], player.currentRoom.players)
+
+                elif Input[0] == "radio":
+                    sendToEveryone("[" + player.playerName + " RADIOTALK]: " + Input[1] + " - over")
 
                 elif Input[0] == "newname":
-                    player.outputQueue.put("Your name was changed from " + player.playerName + " to " + Input[1])
+                    player.addToOutQueue("Your name was changed from " + player.playerName + " to " + Input[1])
                     player.playerName = Input[1]
 
                 elif Input[0] == "move":
-                    directions = ["front", "back", "left", "right"]
-                    player.moveToRoom(directions.index(Input[1]))
-                    player.outputQueue.put("You have moved to: " + player.currentRoom.name)
+                    if Input[1] in player.currentRoom.connectedRooms:
+                        oldRoom = player.currentRoom
+                        newRoom = player.currentRoom.connectedRooms[Input[1]]
 
-                    #print(player.currentRoom.connectedRooms)
+                        # removes the player from the current room
+                        player.currentRoom.players.remove(player)
+
+                        # announce that a player has left the current room
+                        talkInRoom(player.playerName + "Has left the room", oldRoom.players)
+
+                        # Move the player to the new Room
+                        player.moveToRoom(ship.rooms[newRoom])
+                        player.addToOutQueue("You have moved to: " + player.currentRoom.name)
+
+                        # announce that a player has entered a new room
+                        talkInRoom(player.playerName + "Entered the room", player.currentRoom.players)
+
+                        # adds the player to the new room
+                        player.currentRoom.players.append(player)
+
+                    else:
+                        player.addToOutQueue("-- There is no room to move to in this direction --")
 
 
                 else:
-                    player.outputQueue.put("--INVALID COMMAND--")
+                    player.addToOutQueue("--INVALID COMMAND--")
 
 
 # Send a message to every player
 def sendToEveryone(message):
     for player in players:
-        player.outputQueue.put(message)
+        player.addToOutQueue(message)
 
+# Send a message to every player in the same room
+def talkInRoom(message, PlayersInCurrentRoom):
+    for player in PlayersInCurrentRoom:
+        player.addToOutQueue(message)
 
 # =================== MAIN ========================= #
 
