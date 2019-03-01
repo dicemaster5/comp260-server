@@ -62,7 +62,7 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         self.DisplayText(self.newInput)
         self.UserInputBox.setText("")
 
-        # Send to the server!!!
+        # Send to the server!!!say
         sendFunction(self.newInput)
 
     def DisplayText(self, text):

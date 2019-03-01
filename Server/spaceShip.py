@@ -13,33 +13,50 @@ class room:
 
 class ship:
     def __init__(self):
-        self.name: str
+        self.name = ""
         self.position: (int, int)
         self.rooms = {}
         self.players = []
 
+    # Creates a ship made of defined rooms
     def generateShip(self, ShipName):
         self.name = ShipName
 
         cockPit = room()
         cockPit.setRoom(
                         "Cock Pit",
-                        {"back":"Main Deck"},
+                        {"back": "Main Deck"},
                         "You are in the main controls room.\n"
-                        "from here you can control an navigate the ship.")
+                        "The pilot seat is at the front with many control panels surrounding it.\n"
+                        "From here you can control and navigate the ship.")
 
         mainDeck = room()
         mainDeck.setRoom(
                         "Main Deck",
-                        {"front":"Cock Pit", "back":"Cargo Haul"},
+                        {"front": "Cock Pit", "back":"Cargo Haul", "left":"Medical Room", "right":"Armory"},
                         "You are standing in the main deck of the ship.\n"
                         "There are many terminals around you.")
 
         cargoHaul = room()
         cargoHaul.setRoom(
                         "Cargo Haul",
-                        {"front":"Main Deck"},
+                        {"front": "Main Deck"},
                         "You are in the Cargo Haul of the ship.\n"
                         "There are all sorts of worthless treasures in here.")
 
-        self.rooms = {"Cock Pit": cockPit, "Main Deck": mainDeck, "Cargo Haul": cargoHaul}
+        medicRoom = room()
+        medicRoom.setRoom(
+                        "Medical Room",
+                        {"right": "Main Deck"},
+                        "You are in the Medical room.\n"
+                        "There are medical kits and beds in the room.")
+
+        Armory = room()
+        Armory.setRoom(
+                        "Armory",
+                        {"left": "Main Deck"},
+                        "You are in the Armory.\n"
+                        "There are laser rifles and plasma guns hanging on the walls.\n"
+                        "you also notice a box withe the word -CAUTION EXPLOSIVES- on the side of it.")
+
+        self.rooms = {"Cock Pit": cockPit, "Main Deck": mainDeck, "Cargo Haul": cargoHaul, "Medical Room":medicRoom, "Armory":Armory}

@@ -1,10 +1,10 @@
 from queue import *
 import threading
 import socket
-from spaceShip import ship, room
 
 class client:
-    # Init function
+
+# ========================= Initialization CODE ====================== #
     def __init__(self, clientSocket, spaceShip):
         self.inputQueue = Queue()
         self.outputQueue = Queue()
