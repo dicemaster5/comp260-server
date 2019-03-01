@@ -15,10 +15,10 @@ class CommandBase:
                 Input = player.inputQueue.get().lower()
                 Input = Input.split(" ", 1)
 
-                self.commands = {"help": lambda:self.helpCommand(player),
-                                 "look": lambda:self.lookCommand(player),
-                                 "newname": lambda:self.newNameCommand(player, Input),
-                                 "move": lambda:self.moveCommand(player, Input),
+                self.commands = {"help": lambda: self.helpCommand(player),
+                                 "look": lambda: self.lookCommand(player),
+                                 "newname": lambda: self.newNameCommand(player, Input),
+                                 "move": lambda: self.moveCommand(player, Input),
                                  "say": lambda: self.sayInRoomCommand(player, Input),
                                  "radio": lambda: self.radioCommand(Input),
                                  "shipname": lambda: self.shipNameCommand(player)

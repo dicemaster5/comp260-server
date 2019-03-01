@@ -2,9 +2,9 @@ from queue import *
 import threading
 import socket
 
-class client:
 
-# ========================= Initialization CODE ====================== #
+class player:
+    # ========================= Initialization CODE ====================== #
     def __init__(self, clientSocket, spaceShip):
         self.inputQueue = Queue()
         self.outputQueue = Queue()
@@ -19,25 +19,23 @@ class client:
         self.inventory = {}
 
         # clientReceiveThread starter
-        clientReceiveThread = threading.Thread(target=client.receiveThread, args=(self,))
+        clientReceiveThread = threading.Thread(target=player.receiveThread, args=(self,))
         clientReceiveThread.start()
 
         # clientSendingThread starter
-        clientSendingThread = threading.Thread(target=client.sendingThread, args=(self,))
+        clientSendingThread = threading.Thread(target=player.sendingThread, args=(self,))
         clientSendingThread.start()
 
 # ========================= PLAYER FUNCTIONS CODE ====================== #
-
     # adds a new message to the outPutQueue to be sent to the client of this player
     def addToOutQueue(self, message):
         self.outputQueue.put(message)
 
     # Moves the player to a new room
-    def moveToRoom(self, room):
-        self.currentRoom = room
+    def moveToRoom(self, newRoom):
+        self.currentRoom = newRoom
 
 # ========================= THREADING CODE ============================== #
-
     def receiveThread(self):
         print("receiveThread running")
         canReceive = True

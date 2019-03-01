@@ -5,7 +5,6 @@ import time
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 
 clientIsRunning: bool = True
-newInput: str
 
 class ClientData:
     def __init__(self):
@@ -15,7 +14,6 @@ class ClientData:
         self.incomingMessage = ""
         self.currentBackgroundThread = None
         self.currentReceiveThread = None
-        self.currentSendThread = None
 
 
 clientData = ClientData()
@@ -29,7 +27,7 @@ Ui_MainWindow, QtBaseClass = uic.loadUiType(qtCreatorFile)
 
 
 # PyQT application.
-class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
+class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         Ui_MainWindow.__init__(self)
@@ -79,7 +77,7 @@ def sendFunction(newInput):
 # ========================= THREADING CODE ====================== #
 
 
-def receiveThread(clientData, MyApp):
+def receiveThread(clientData):
     print("receiveThread running")
 
     while clientData.connectedToServer is True:
@@ -102,7 +100,7 @@ def receiveThread(clientData, MyApp):
             clientData.serverSocket = None
 
 
-def backgroundThread(clientData, MyApp):
+def backgroundThread(clientData):
     print("backgroundThread running")
     clientData.connectedToServer = False
 
@@ -116,7 +114,7 @@ def backgroundThread(clientData, MyApp):
                 clientData.serverSocket.connect(("127.0.0.1", 8222))
 
             clientData.connectedToServer = True
-            clientData.currentReceiveThread = threading.Thread(target=receiveThread, args=(clientData, MyApp,))
+            clientData.currentReceiveThread = threading.Thread(target=receiveThread, args=(clientData,))
             clientData.currentReceiveThread.start()
 
             print("connected")
@@ -142,11 +140,11 @@ if __name__ == "__main__":
         app = QtWidgets.QApplication(sys.argv)
 
         # Create and show qtWindow
-        window = MyApp()
+        window = QtWindow()
         window.show()
 
         # main()
-        clientData.currentBackgroundThread = threading.Thread(target=backgroundThread, args=(clientData, window))
+        clientData.currentBackgroundThread = threading.Thread(target=backgroundThread, args=(clientData,))
         clientData.currentBackgroundThread.start()
 
         # Event loop

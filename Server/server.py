@@ -3,7 +3,7 @@ import time
 import socket
 import threading
 from commands import CommandBase
-from client import client
+from player import player
 
 import spaceShip
 
@@ -25,7 +25,7 @@ def acceptThread(serverSocket):
     print("acceptThread running")
     while serverIsRunning:
         newSocket = serverSocket.accept()[0]
-        newClient = client(newSocket, ship)
+        newClient = player(newSocket, ship)
         clientsLock.acquire()
 
         # Add the new client to the ship and current room [main deck by default]
