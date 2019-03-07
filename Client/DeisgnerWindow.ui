@@ -96,14 +96,20 @@ font: 6pt &quot;8514oem&quot;;</string>
      <string>Send</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="ShipView">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>10</y>
-      <width>281</width>
-      <height>481</height>
+      <x>610</x>
+      <y>20</y>
+      <width>256</width>
+      <height>256</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#7a818c;
+text-align:center;
+image-rendering: crisp-edges;
+</string>
     </property>
     <property name="lineWidth">
      <number>10</number>
@@ -111,11 +117,11 @@ font: 6pt &quot;8514oem&quot;;</string>
     <property name="text">
      <string/>
     </property>
-    <property name="pixmap">
-     <pixmap>../SpaceShipImage.png</pixmap>
-    </property>
     <property name="scaledContents">
-     <bool>true</bool>
+     <bool>false</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
     <property name="wordWrap">
      <bool>false</bool>
