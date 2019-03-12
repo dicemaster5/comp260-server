@@ -127,6 +127,24 @@ image-rendering: crisp-edges;
      <bool>false</bool>
     </property>
    </widget>
+   <widget class="QPushButton" name="RandoButton">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>290</y>
+      <width>141</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:rgb(75, 75, 75);
+color: white;
+font: 6pt &quot;8514oem&quot;;</string>
+    </property>
+    <property name="text">
+     <string>NEW SHIP!</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>

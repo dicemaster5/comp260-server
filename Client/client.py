@@ -43,9 +43,7 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Send startup message
         self.textDisplay.append("Window init!")
 
-        generateSpaceShipImage()
-
-        self.ShipView.setPixmap(QtGui.QPixmap("ShipParts/out.png"))
+        self.RandoButton.clicked.connect(lambda: self.UpdateImageEvent())
 
 
         # button Onclick
@@ -53,6 +51,10 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # When enter is pressed in input box.
         self.UserInputBox.returnPressed.connect(lambda: self.EnterInputText())
+
+    def UpdateImageEvent(self):
+        generateSpaceShipImage()
+        self.ShipView.setPixmap(QtGui.QPixmap("ShipParts/out.png"))
 
     def closeEvent(self, event):
         clientData.serverSocket.close()
@@ -75,23 +77,47 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.textDisplay.moveCursor(QtGui.QTextCursor.End)
 
 def generateSpaceShipImage():
+    random.seed(time.time())
+    square = 16
+
+    cockPitSection = 0
+    mainHaulSection = square * 3
+    thrusterSection = square * 6
+    wingSection = square * 9
+
+    shipPartsImg = Image.open("ShipParts/ShipParts.png")
+    # w0, h0 = shipPartsImg.size
+
+    cockPitSize = (square * 3, square * 2)
+    mainHaulSize = (square * 3, square * 2)
+    thrusterSize = (square * 3, square * 2)
+    wingSize = (square * 2, square * 3)
+
+    pointerPos = (cockPitSize[0] + square) * random.randint(1,3)
+
+
+    # Areas to crop at -- NEEDS TO BE RANDOM! --
+    newCockpit = shipPartsImg.crop((pointerPos, cockPitSection, pointerPos + cockPitSize[0], cockPitSection + cockPitSize[1]))
+
+    random.seed()
+    pointerPos = (cockPitSize[0] + square) * random.randint(1,3)
+    newMainHull = shipPartsImg.crop((pointerPos, mainHaulSection, pointerPos + mainHaulSize[0], mainHaulSection + mainHaulSize[1]))
+    random.seed()
+    pointerPos = (cockPitSize[0] + square) * random.randint(1,3)
+    newThruster = shipPartsImg.crop((pointerPos, thrusterSection, pointerPos + thrusterSize[0], thrusterSection + thrusterSize[1]))
+    random.seed()
+    pointerPos = (wingSize[0] + square) * random.randint(1,4)
+    newWing1 = shipPartsImg.crop((pointerPos, wingSection, pointerPos + wingSize[0], wingSection + wingSize[1]))
+    newWing2 = ImageOps.mirror(newWing1)
+
+    # Parts positions to put a ship together
     cockPitPos = (32, 0)
     mainHaulPos = (32, 32)
     thrusterPos = (32, 64)
     wingPos1 = (0, 16)
     wingPos2 = (64 + 16, 16)
 
-    shipPartsImg = Image.open("ShipParts/ShipParts.png")
-    # w0, h0 = shipPartsImg.size
-
-    newCockpit = shipPartsImg.crop((64, 0, 64 + 48, 0 + 32))
-    # w, h = newCockpit.size
-
-    newMainHull = shipPartsImg.crop((64, 48, 64 + 48, 48 + 32))
-    newThruster = shipPartsImg.crop((64, 96, 64 + 48, 96 + 32))
-    newWing1 = shipPartsImg.crop((0, 144, 0 + 32, 144 + 48))
-    newWing2 = ImageOps.mirror(newWing1)
-
+    # Paste new parts to make ship
     newShip = Image.new('RGBA', (112, 112))
     newShip.paste(newCockpit, cockPitPos)
     newShip.paste(newMainHull, mainHaulPos)
@@ -99,21 +125,9 @@ def generateSpaceShipImage():
     newShip.paste(newWing1, wingPos1)
     newShip.paste(newWing2, wingPos2)
 
-    block = (16, 16)
-    x = block[0]
-    y = block[1]
-
-    cockPit = (x * 3, y * 2)
-    mainHaul = (x * 3, y * 2)
-    thruster = (x * 3, y * 2)
-    wing = (x * 2, y * 3)
-
-    # shipartsMatrix = np.zeros(shape=(int(h0 / y), int(w0 / x)))
-    # newShipMatrix = np.zeros(shape=(int(h / y), int(w / x)))
-    # print(newShipMatrix)
-
     newShip = newShip.resize((224, 224), Image.NEAREST)
     newShip.save("ShipParts/out.png")
+    #QtWindow.ShipView.setPixmap(QtGui.QPixmap("ShipParts/out.png"))
 
 def sendFunction(newInput):
     if clientData.connectedToServer:
