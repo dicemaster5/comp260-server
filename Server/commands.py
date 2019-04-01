@@ -1,31 +1,47 @@
-class CommandBase:
+class Commands:
     def __init__(self, players, spaceShip):
         self.players = players
+        self.currentPlayer = None
+        self.Input = None
+
         self.ship = spaceShip
-        self.commands = {}
+
+        self.gameCommands = {"help": lambda: self.helpCommand(self.currentPlayer),
+                             "look": lambda: self.lookCommand(self.currentPlayer),
+                             "newname": lambda: self.newNameCommand(self.currentPlayer, self.Input),
+                             "move": lambda: self.moveCommand(self.currentPlayer, self.Input),
+                             "say": lambda: self.sayInRoomCommand(self.currentPlayer, self.Input),
+                             "radio": lambda: self.radioCommand(self.Input),
+                             "shipname": lambda: self.shipNameCommand(self.currentPlayer)
+                             }
+
+        self.loginCommands = {"1": lambda: self.loginCommand(self.currentPlayer),
+                              "2": lambda: self.newAccountCommand(self.currentPlayer)
+                              }
 
 # =================== INPUT PROCESSING ========================= #
     # Check all the Inputs coming in of each player to activate commands accordingly
     def checkInputs(self):
         for player in self.players:
+            self.currentPlayer = player
+
             if player.inputQueue.qsize() > 0:
-                print("Checking Inputs")
 
                 # splits up the input
-                Input = player.inputQueue.get().lower()
-                Input = Input.split(" ", 1)
+                self.Input = player.inputQueue.get().lower().split(" ", 1)
 
-                self.commands = {"help": lambda: self.helpCommand(player),
-                                 "look": lambda: self.lookCommand(player),
-                                 "newname": lambda: self.newNameCommand(player, Input),
-                                 "move": lambda: self.moveCommand(player, Input),
-                                 "say": lambda: self.sayInRoomCommand(player, Input),
-                                 "radio": lambda: self.radioCommand(Input),
-                                 "shipname": lambda: self.shipNameCommand(player)
-                                 }
+                # Login/Account commands
+                if player.loginStage and self.Input[0] in self.loginCommands:
+                    self.loginCommands[self.Input[0]]()
 
-                if Input[0] in self.commands:
-                    self.commands[Input[0]]()
+                # Game Commands
+                elif player.gameStage and self.Input[0] in self.gameCommands:
+                    try:
+                        self.gameCommands[self.Input[0]]()
+                    except:
+                        player.addToOutQueue("ERROR --MISSING AN EXTRA INPUT--")
+
+                # If any input doesn't exist as a command
                 else:
                     player.addToOutQueue("ERROR --INVALID COMMAND--")
 
@@ -40,7 +56,18 @@ class CommandBase:
         for player in PlayersInCurrentRoom:
             player.addToOutQueue(message)
 
-# =================== Command Functions ========================= #
+# =================== Login Command Functions ========================= #
+# Help command displays all the commands the player can write
+    def loginCommand(self, player):
+        player.addToOutQueue("YOU ARE TRYING TO LOGIN")
+        player.addToOutQueue("YOU Have Logged in!")
+        player.loginStage = False
+        player.gameStage = True
+
+    def newAccountCommand(self, player):
+        player.addToOutQueue("YOU ARE TRYING TO CREATE A NEW ACCOUNT")
+
+# =================== Game Command Functions ========================= #
     # Help command displays all the commands the player can write
     def helpCommand(self, player):
         player.addToOutQueue(

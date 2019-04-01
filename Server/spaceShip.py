@@ -57,6 +57,6 @@ class ship:
                         {"left": "Main Deck"},
                         "You are in the Armory.\n"
                         "There are laser rifles and plasma guns hanging on the walls.\n"
-                        "you also notice a box withe the word -CAUTION EXPLOSIVES- on the side of it.")
+                        "you also notice a box withe the words -CAUTION EXPLOSIVES- on the side of it.")
 
-        self.rooms = {"Cock Pit": cockPit, "Main Deck": mainDeck, "Cargo Haul": cargoHaul, "Medical Room":medicRoom, "Armory":Armory}
+        self.rooms = {"Cock Pit": cockPit, "Main Deck": mainDeck, "Cargo Haul": cargoHaul, "Medical Room": medicRoom, "Armory": Armory}

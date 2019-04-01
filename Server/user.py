@@ -3,11 +3,13 @@ import threading
 import socket
 
 
-class player:
+class user:
     # ========================= Initialization CODE ====================== #
-    def __init__(self, clientSocket, spaceShip):
+    def __init__(self, clientSocket):
 
         # User vars
+        self.username = ""
+
         self.inputQueue = Queue()
         self.outputQueue = Queue()
         self.clientSocket = clientSocket
@@ -22,19 +24,12 @@ class player:
         self.canReceive = True
         self.canSend = True
 
-        # Player game vars
-        self.playerName = "Roger"
-        self.currentSpaceShip = spaceShip
-        self.currentRoom = self.currentSpaceShip.rooms["Main Deck"]
-        self.health = 100
-        self.inventory = {}
-
         # clientReceiveThread starter
-        clientReceiveThread = threading.Thread(target=player.receiveThread, args=(self,))
+        clientReceiveThread = threading.Thread(target=user.receiveThread, args=(self,))
         clientReceiveThread.start()
 
         # clientSendingThread starter
-        clientSendingThread = threading.Thread(target=player.sendingThread, args=(self,))
+        clientSendingThread = threading.Thread(target=user.sendingThread, args=(self,))
         clientSendingThread.start()
 
 # ========================= PLAYER FUNCTIONS CODE ====================== #
@@ -71,7 +66,7 @@ class player:
                     # Send message to the player
                     self.clientSocket.send(outputMeassage.encode("utf-8"))
 
-                    print(self.playerName + " is Sending: " + outputMeassage)
+                    print(self.username + ": " + outputMeassage)
 
             except socket.error:
                 self.canSend = False

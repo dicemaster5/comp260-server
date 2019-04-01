@@ -2,7 +2,8 @@ import sys
 import time
 import socket
 import threading
-from commands import CommandBase
+import sqlite3
+from commands import Commands
 from player import player
 
 import spaceShip
@@ -10,34 +11,44 @@ import spaceShip
 serverIsRunning: bool = True
 
 players = []
-clients = {}
-clientsLock = threading.Lock()
+users = {}
+userLock = threading.Lock()
 
 # Main space Ship of the game
 ship = spaceShip.ship
 ship.generateShip(spaceShip.ship, "RF-42 Centaur Cargo Ship")
 
 # Main commands class
-commands = CommandBase(players, ship)
+commands = Commands(players, ship)
+
 
 # ========================= acceptThread ====================== #
 def acceptThread(serverSocket):
     print("acceptThread running")
     while serverIsRunning:
         newSocket = serverSocket.accept()[0]
-        newClient = player(newSocket, ship)
-        clientsLock.acquire()
+        newUser = player(newSocket, ship)
+        userLock.acquire()
 
         # Add the new client to the ship and current room [main deck by default]
-        players.append(newClient)
+        players.append(newUser)
+
+        newUser.loginStage = True
+
+        # Login/new Account stage
+        #while newClient.loginStage:
+        newUser.addToOutQueue("WOULD YOU LIKE TO LOGIN OR CREATE AN ACCOUNT?\n"
+                              "1: to login\n"
+                              "2: to create a new account")
+
         ship.players = players
-        newClient.currentRoom.players.append(newClient)
+        newUser.currentRoom.players.append(newUser)
 
         # Announce to everyone that a new player has joined the ship
-        commands.sendToEveryone(newClient.playerName + " Has Joined the crew!")
+        commands.sendToEveryone(newUser.playerName + " Has Joined the crew!")
 
-        clients[newClient.clientSocket] = 0
-        clientsLock.release()
+        users[newUser.clientSocket] = 0
+        userLock.release()
 
         print("Added client!")
 
