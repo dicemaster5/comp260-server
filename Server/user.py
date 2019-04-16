@@ -1,25 +1,28 @@
 from queue import *
 import threading
 import socket
+from player import player
 
 
 class user:
+    STATE_LOGIN = 0
+    STATE_INGAME = 1
     # ========================= Initialization CODE ====================== #
-    def __init__(self, clientSocket):
+    def __init__(self, clientSocket, ship):
 
         # User vars
-        self.username = ""
+        self.clientID = ""
+        self.username = "USERNAME"
+        self.currentPlayer = player(self, ship)
 
         self.inputQueue = Queue()
         self.outputQueue = Queue()
         self.clientSocket = clientSocket
 
-        self.states = ["Login", "Game", ""]
-        self.currentUserState = ""
-        self.loginStage = False
-        self.gameStage = False
-
-        self.clientID = ""
+        # User states
+        self.state = user.STATE_LOGIN
+        #self.loginState = False
+        #self.gameState = False
 
         self.canReceive = True
         self.canSend = True
@@ -32,14 +35,10 @@ class user:
         clientSendingThread = threading.Thread(target=user.sendingThread, args=(self,))
         clientSendingThread.start()
 
-# ========================= PLAYER FUNCTIONS CODE ====================== #
-    # adds a new message to the outPutQueue to be sent to the client of this player
+# ========================= USER FUNCTIONS CODE ====================== #
+    # adds a new message to the outPutQueue to be sent to the client of this user
     def addToOutQueue(self, message):
         self.outputQueue.put(message)
-
-    # Moves the player to a new room
-    def moveToRoom(self, newRoom):
-        self.currentRoom = newRoom
 
 # ========================= THREADING CODE ============================== #
     def receiveThread(self):

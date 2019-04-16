@@ -2,9 +2,6 @@ import sys
 import socket
 import threading
 import time
-import random
-import numpy as np
-from PIL import Image, ImageOps
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 
 clientIsRunning: bool = True
@@ -14,6 +11,7 @@ class ClientData:
         self.serverSocket = None
         self.connectedToServer = False
         self.running = True
+
         self.incomingMessage = ""
         self.currentBackgroundThread = None
         self.currentReceiveThread = None
@@ -35,26 +33,20 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
 
-        # Setup timer
-        #self.timer = QtCore.QTimer()
-        #self.timer.timeout.connect(self.timerEvent)
-        #self.timer.start(100)
+        # Hide the login panel
+        self.loginWidget.hide()
 
         # Send startup message
         self.textDisplay.append("Window init!")
 
-        self.RandoButton.clicked.connect(lambda: self.UpdateImageEvent())
-
-
-        # button Onclick
+        # buttons Onclick
         self.InputButton.clicked.connect(lambda: self.EnterInputText())
+
+        self.LoginButton.clicked.connect(lambda: self.TryLogin())
+        self.NewAccountButton.clicked.connect(lambda: self.TryNewAccount())
 
         # When enter is pressed in input box.
         self.UserInputBox.returnPressed.connect(lambda: self.EnterInputText())
-
-    def UpdateImageEvent(self):
-        generateSpaceShipImage()
-        self.ShipView.setPixmap(QtGui.QPixmap("ShipParts/out.png"))
 
     def closeEvent(self, event):
         clientData.serverSocket.close()
@@ -76,58 +68,27 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.textDisplay.append(text)
         self.textDisplay.moveCursor(QtGui.QTextCursor.End)
 
-def generateSpaceShipImage():
-    random.seed(time.time())
-    square = 16
+    # ----- LOGIN PANEL FUNCTIONS ----- #
+    def ShowLoginPanel(self):
+        self.loginWidget.show()
 
-    cockPitSection = 0
-    mainHaulSection = square * 3
-    thrusterSection = square * 6
-    wingSection = square * 9
+    def TryLogin(self):
+        if len(self.UserNameInput.text()) > 0 and len(self.PassWordInput.text()) > 0:
+            # Send Username and password across for checking
+            sendFunction("--!Login/" + self.UserNameInput.text() + "/" + self.PassWordInput.text())
 
-    shipPartsImg = Image.open("ShipParts/ShipParts.png")
-    # w0, h0 = shipPartsImg.size
+            #self.DisplayText("-- LOGIN ACCEPTED! --")
+            #self.loginWidget.hide()
+        else:
+            self.DisplayText("-- ERROR Please input a Username and Password --")
 
-    cockPitSize = (square * 3, square * 2)
-    mainHaulSize = (square * 3, square * 2)
-    thrusterSize = (square * 3, square * 2)
-    wingSize = (square * 2, square * 3)
+    def TryNewAccount(self):
+        if len(self.UserNameInput.text()) > 0 and len(self.PassWordInput.text()) > 0:
+            sendFunction("--!NewAccount/" + self.UserNameInput.text() + "/" + self.PassWordInput.text())
 
-    pointerPos = (cockPitSize[0] + square) * random.randint(1,3)
-
-
-    # Areas to crop at -- NEEDS TO BE RANDOM! --
-    newCockpit = shipPartsImg.crop((pointerPos, cockPitSection, pointerPos + cockPitSize[0], cockPitSection + cockPitSize[1]))
-
-    random.seed()
-    pointerPos = (cockPitSize[0] + square) * random.randint(1,3)
-    newMainHull = shipPartsImg.crop((pointerPos, mainHaulSection, pointerPos + mainHaulSize[0], mainHaulSection + mainHaulSize[1]))
-    random.seed()
-    pointerPos = (cockPitSize[0] + square) * random.randint(1,3)
-    newThruster = shipPartsImg.crop((pointerPos, thrusterSection, pointerPos + thrusterSize[0], thrusterSection + thrusterSize[1]))
-    random.seed()
-    pointerPos = (wingSize[0] + square) * random.randint(1,4)
-    newWing1 = shipPartsImg.crop((pointerPos, wingSection, pointerPos + wingSize[0], wingSection + wingSize[1]))
-    newWing2 = ImageOps.mirror(newWing1)
-
-    # Parts positions to put a ship together
-    cockPitPos = (32, 0)
-    mainHaulPos = (32, 32)
-    thrusterPos = (32, 64)
-    wingPos1 = (0, 16)
-    wingPos2 = (64 + 16, 16)
-
-    # Paste new parts to make ship
-    newShip = Image.new('RGBA', (112, 112))
-    newShip.paste(newCockpit, cockPitPos)
-    newShip.paste(newMainHull, mainHaulPos)
-    newShip.paste(newThruster, thrusterPos)
-    newShip.paste(newWing1, wingPos1)
-    newShip.paste(newWing2, wingPos2)
-
-    newShip = newShip.resize((224, 224), Image.NEAREST)
-    newShip.save("ShipParts/out.png")
-    #QtWindow.ShipView.setPixmap(QtGui.QPixmap("ShipParts/out.png"))
+            #self.DisplayText("-- ACCOUNT ACCEPTED! --")
+        else:
+            self.DisplayText("-- ERROR Please input a Username and Password --")
 
 def sendFunction(newInput):
     if clientData.connectedToServer:
@@ -136,7 +97,6 @@ def sendFunction(newInput):
         window.DisplayText("ERROR - Client is not connected to a server")
 
 # ========================= THREADING CODE ====================== #
-
 
 def receiveThread(clientData):
     print("receiveThread running")
@@ -165,6 +125,7 @@ def backgroundThread(clientData):
     print("backgroundThread running")
     clientData.connectedToServer = False
 
+    # -- CODE TO CONNECT TO THE SERVER -- #
     while (clientData.connectedToServer is False) and (clientData.running is True):
         try:
 
@@ -179,7 +140,9 @@ def backgroundThread(clientData):
             clientData.currentReceiveThread.start()
 
             print("connected")
-            window.DisplayText("Server Connected")
+            window.DisplayText("Client: Server Connected\n")
+
+            window.ShowLoginPanel()
 
             while clientData.connectedToServer is True:
                 time.sleep(1.0)
