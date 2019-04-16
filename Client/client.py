@@ -111,8 +111,28 @@ def receiveThread(clientData):
             clientDataLock.release()
             print("Text Received: " + text)
 
-            # Display text received to the UI text box
-            window.DisplayText(text)
+            textList = text.split(":", 1)
+
+            if textList[0] == "dis":
+                # Display text received to the UI text box
+                window.DisplayText(textList[1])
+
+            elif textList[0] == "cmd":
+                commandlist = textList[1].split("/")
+                if commandlist[0] == "loginAccepted":
+                    window.loginWidget.hide()
+
+                if commandlist[0] == "updateUserName":
+                    window.userNameBox.setText("USERNAME: " + commandlist[1])
+
+                if commandlist[0] == "updatePlayerName":
+                    window.playerNameBox.setText("PLAYER NAME: " + commandlist[1])
+
+                if commandlist[0] == "updateRoom":
+                    window.currentRoomBox.setText("CURRENT ROOM: " + commandlist[1])
+            else:
+                print(textList)
+                print(commandlist)
 
         except socket.error:
             print("Server lost")

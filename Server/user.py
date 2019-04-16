@@ -37,8 +37,11 @@ class user:
 
 # ========================= USER FUNCTIONS CODE ====================== #
     # adds a new message to the outPutQueue to be sent to the client of this user
-    def addToOutQueue(self, message):
-        self.outputQueue.put(message)
+    def addToOutQueue(self, message, cmdBool = False):
+        if cmdBool:
+            self.outputQueue.put("cmd:" + message)
+        else:
+            self.outputQueue.put("dis:" + message)
 
 # ========================= THREADING CODE ============================== #
     def receiveThread(self):

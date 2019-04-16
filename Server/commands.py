@@ -37,12 +37,6 @@ class Commands:
                 if user.state == user.STATE_LOGIN:
                     # splits up the input
                     self.Input = user.inputQueue.get().split("/")
-                    #username = self.Input[1]
-                    #password = self.Input[2]
-
-                    #Debug to check input
-                    #user.addToOutQueue(''.join(self.Input))
-                    #user.addToOutQueue(username + password)
 
                     if self.Input[0] in self.loginCommands:
                         self.loginCommands[self.Input[0]]()
@@ -52,7 +46,7 @@ class Commands:
                         user.addToOutQueue("ERROR --INVALID COMMAND--")
 
                 # ------ Game Commands -------
-                if user.state == user.STATE_INGAME:
+                elif user.state == user.STATE_INGAME:
                         # splits up the input and makes it all lower case
                         self.Input = user.inputQueue.get().lower().split(" ", 1)
 
@@ -68,10 +62,16 @@ class Commands:
 
 
 # =================== Multi-Use Functions ========================= #
-    # Send a message to every player in the spaceship
+    # Send a message to every player in Game
+    def sendToEveryoneInGame(self, message):
+        for user in self.users:
+            if user.state == user.STATE_INGAME:
+                user.addToOutQueue(message)
+
+    # Send a message to every client User
     def sendToEveryone(self, message):
-        for player in self.users:
-            player.addToOutQueue(message)
+        for user in self.users:
+            user.addToOutQueue(message)
 
     # Send a message to every player in the same room
     def sendToEveryoneInRoom(self, message, PlayersInCurrentRoom):
@@ -81,26 +81,33 @@ class Commands:
 # =================== Login Command Functions ========================= #
 # Help command displays all the commands the player can write
     def loginCommand(self, user, input):
-        self.SqlData.OpenDatabase()
+        #self.SqlData.OpenDatabase()
         if self.SqlData.Login(input[1], input[2]):
             user.state = user.STATE_INGAME
 
             # add user to the ship
             user.currentPlayer.currentRoom.players.append(user.currentPlayer)
             user.addToOutQueue("YOU Have Logged in!")
-            # self.sendToEveryone(user.currentPlayer.playerName + " has joined the crew!")
+            user.addToOutQueue("loginAccepted", True)
+            user.addToOutQueue("updateUserName/" + user.username, True)
+            user.addToOutQueue("updatePlayerName/" + user.currentPlayer.playerName, True)
+            user.addToOutQueue("updateRoom/" + str(user.currentPlayer.currentRoom.name), True)
+
+
+            # notifies everyone in game that a new player has joined
+            self.sendToEveryoneInGame(user.currentPlayer.playerName + " has joined the crew!")
         else:
             user.addToOutQueue("Failed to login!\n"
                                "Incorrect username or password.")
 
     def newAccountCommand(self, player, input):
         player.addToOutQueue("YOU ARE TRYING TO CREATE A NEW ACCOUNT")
-        self.SqlData.OpenDatabase()
+        #self.SqlData.OpenDatabase()
         if self.SqlData.AddAccount(input[1], input[2]):
             player.addToOutQueue("You have created an account")
         else:
             player.addToOutQueue("Failed to create an account.\n"
-                                 "This username might already exist")
+                                 "This user account might already exist")
 # =================== Game Command Functions ========================= #
     # Help command displays all the commands the player can write
     def helpCommand(self, player):
@@ -130,6 +137,7 @@ class Commands:
     def newNameCommand(self, player, Input):
         player.addToOutQueue("Your name was changed from " + self.currentPlayer.playerName + " to " + Input[1])
         self.currentPlayer.playerName = Input[1]
+        player.addToOutQueue("updatePlayerName/" + player.currentPlayer.playerName, True)
 
     # Send a message to every player in the same room
     def sayInRoomCommand(self, Input):
@@ -162,6 +170,9 @@ class Commands:
 
             # adds the player to the new room
             self.currentPlayer.currentRoom.players.append(self.currentPlayer)
+
+            # update room textbox on client
+            user.addToOutQueue("updateRoom/" + str(user.currentPlayer.currentRoom.name), True)
 
         else:
             user.addToOutQueue("-- There is no room to move to in this direction --")
