@@ -91,7 +91,7 @@ class Commands:
             user.addToOutQueue("loginAccepted", True)
             user.addToOutQueue("updateUserName/" + user.username, True)
             user.addToOutQueue("updatePlayerName/" + user.currentPlayer.playerName, True)
-            user.addToOutQueue("updateRoom/" + str(user.currentPlayer.currentRoom.name), True)
+            user.addToOutQueue("updateRoom/" + user.currentPlayer.currentRoom.name, True)
 
 
             # notifies everyone in game that a new player has joined
@@ -172,7 +172,7 @@ class Commands:
             self.currentPlayer.currentRoom.players.append(self.currentPlayer)
 
             # update room textbox on client
-            user.addToOutQueue("updateRoom/" + str(user.currentPlayer.currentRoom.name), True)
+            user.addToOutQueue("updateRoom/" + user.currentPlayer.currentRoom.name, True)
 
         else:
             user.addToOutQueue("-- There is no room to move to in this direction --")
