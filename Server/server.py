@@ -5,6 +5,7 @@ import threading
 import sqlite3
 
 from commands import Commands
+from dataManager import dataManager
 from user import user
 from player import player
 import spaceShip
@@ -21,7 +22,7 @@ ship.generateShip(spaceShip.ship, "RF-42 Centaur Cargo Ship")
 
 # Main commands class
 commands = Commands(users, ship)
-
+dataManager = dataManager()
 
 # ========================= acceptThread ====================== #
 def acceptThread(serverSocket):
@@ -46,6 +47,8 @@ def acceptThread(serverSocket):
 
 # =================== MAIN ========================= #
 if __name__ == '__main__':
+    dataManager.createDatabase()
+
     mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     mySocket.bind(("127.0.0.1", 8222))

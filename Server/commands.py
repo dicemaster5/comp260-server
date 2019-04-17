@@ -19,7 +19,8 @@ class Commands:
                              "shipname": lambda: self.shipNameCommand(self.currentUser)
                              }
 
-        self.loginCommands = {"--!Login": lambda: self.loginCommand(self.currentUser, self.Input),
+        self.loginCommands = {"--!SaltCheck": lambda: self.saltCheck(self.currentUser, self.Input),
+                              "--!Login": lambda: self.loginCommand(self.currentUser, self.Input),
                               "--!NewAccount": lambda: self.newAccountCommand(self.currentUser, self.Input)
                               }
 
@@ -36,7 +37,7 @@ class Commands:
                 # ----- Login/Account commands ------
                 if user.state == user.STATE_LOGIN:
                     # splits up the input
-                    self.Input = user.inputQueue.get().split("/")
+                    self.Input = user.inputQueue.get().split("#")
 
                     if self.Input[0] in self.loginCommands:
                         self.loginCommands[self.Input[0]]()
@@ -79,9 +80,13 @@ class Commands:
             player.user.addToOutQueue(message)
 
 # =================== Login Command Functions ========================= #
+    def saltCheck(self, user, input):
+        # Send salt back to client
+        user.addToOutQueue("salt#" + self.SqlData.GetSalt(input[1]), True)
+
 # Help command displays all the commands the player can write
     def loginCommand(self, user, input):
-        #self.SqlData.OpenDatabase()
+        # Check username and password
         if self.SqlData.Login(input[1], input[2]):
             user.state = user.STATE_INGAME
 
@@ -89,9 +94,9 @@ class Commands:
             user.currentPlayer.currentRoom.players.append(user.currentPlayer)
             user.addToOutQueue("YOU Have Logged in!")
             user.addToOutQueue("loginAccepted", True)
-            user.addToOutQueue("updateUserName/" + user.username, True)
-            user.addToOutQueue("updatePlayerName/" + user.currentPlayer.playerName, True)
-            user.addToOutQueue("updateRoom/" + user.currentPlayer.currentRoom.name, True)
+            user.addToOutQueue("updateUserName#" + user.username, True)
+            user.addToOutQueue("updatePlayerName#" + user.currentPlayer.playerName, True)
+            user.addToOutQueue("updateRoom#" + user.currentPlayer.currentRoom.name, True)
 
 
             # notifies everyone in game that a new player has joined
@@ -102,8 +107,8 @@ class Commands:
 
     def newAccountCommand(self, player, input):
         player.addToOutQueue("YOU ARE TRYING TO CREATE A NEW ACCOUNT")
-        #self.SqlData.OpenDatabase()
-        if self.SqlData.AddAccount(input[1], input[2]):
+
+        if self.SqlData.AddAccount(input[1], input[2], input[3]):
             player.addToOutQueue("You have created an account")
         else:
             player.addToOutQueue("Failed to create an account.\n"
@@ -137,7 +142,8 @@ class Commands:
     def newNameCommand(self, player, Input):
         player.addToOutQueue("Your name was changed from " + self.currentPlayer.playerName + " to " + Input[1])
         self.currentPlayer.playerName = Input[1]
-        player.addToOutQueue("updatePlayerName/" + player.currentPlayer.playerName, True)
+
+        player.addToOutQueue("updatePlayerName#" + player.currentPlayer.playerName, True)
 
     # Send a message to every player in the same room
     def sayInRoomCommand(self, Input):
@@ -172,7 +178,7 @@ class Commands:
             self.currentPlayer.currentRoom.players.append(self.currentPlayer)
 
             # update room textbox on client
-            user.addToOutQueue("updateRoom/" + user.currentPlayer.currentRoom.name, True)
+            user.addToOutQueue("updateRoom#" + user.currentPlayer.currentRoom.name, True)
 
         else:
             user.addToOutQueue("-- There is no room to move to in this direction --")

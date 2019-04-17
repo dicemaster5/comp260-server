@@ -1,8 +1,10 @@
 import sys
+import bcrypt
 import socket
 import threading
 import time
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
+from passlib.hash import pbkdf2_sha256
 
 clientIsRunning: bool = True
 
@@ -73,22 +75,49 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.loginWidget.show()
 
     def TryLogin(self):
-        if len(self.UserNameInput.text()) > 0 and len(self.PassWordInput.text()) > 0:
-            # Send Username and password across for checking
-            sendFunction("--!Login/" + self.UserNameInput.text() + "/" + self.PassWordInput.text())
+        if len(self.UserNameInput.text()) > 3 and len(self.PassWordInput.text()) > 3:
+            username = self.UserNameInput.text()
+            password = self.PassWordInput.text()
 
-            #self.DisplayText("-- LOGIN ACCEPTED! --")
-            #self.loginWidget.hide()
+            # Send Username and password across for checking
+            sendFunction("--!SaltCheck#" + username + "#" + password)
+
         else:
-            self.DisplayText("-- ERROR Please input a Username and Password --")
+            self.DisplayText("-- ERROR Please input a Username and Password that is longer than 3 chars --")
+
+    def SendSaltedPassword(self, recSalt):
+        username = self.UserNameInput.text()
+        password = self.PassWordInput.text().encode('utf-8')
+        salt = recSalt.encode('utf-8')
+
+        # do this
+        password = bcrypt.hashpw(password, salt)
+
+        password = password.decode()
+
+        # Send Username and password across for checking
+        sendFunction("--!Login#" + username + "#" + password)
+
 
     def TryNewAccount(self):
-        if len(self.UserNameInput.text()) > 0 and len(self.PassWordInput.text()) > 0:
-            sendFunction("--!NewAccount/" + self.UserNameInput.text() + "/" + self.PassWordInput.text())
+        if len(self.UserNameInput.text()) > 3 and len(self.PassWordInput.text()) > 3:
+            username = self.UserNameInput.text()
+            password = self.PassWordInput.text()
+            salt = bcrypt.gensalt(12)
+
+            password = password.encode('utf-8')
+            password = bcrypt.hashpw(password, salt)
+            password = password.decode()
+            salt = salt.decode()
+
+            sendFunction("--!NewAccount#" + username + "#" + password + "#" + salt)
+
+            self.UserNameInput.clear()
+            self.PassWordInput.clear()
 
             #self.DisplayText("-- ACCOUNT ACCEPTED! --")
         else:
-            self.DisplayText("-- ERROR Please input a Username and Password --")
+            self.DisplayText("-- ERROR Please input a Username and Password that is longer than 3 chars --")
 
 def sendFunction(newInput):
     if clientData.connectedToServer:
@@ -118,7 +147,10 @@ def receiveThread(clientData):
                 window.DisplayText(textList[1])
 
             elif textList[0] == "cmd":
-                commandlist = textList[1].split("/")
+                commandlist = textList[1].split("#")
+                if commandlist[0] == "salt":
+                    window.SendSaltedPassword(commandlist[1])
+
                 if commandlist[0] == "loginAccepted":
                     window.loginWidget.hide()
 

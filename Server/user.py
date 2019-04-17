@@ -66,7 +66,7 @@ class user:
                     outputMeassage = self.outputQueue.get()
 
                     # Send message to the player
-                    self.clientSocket.send(outputMeassage.encode("utf-8"))
+                    self.clientSocket.send(outputMeassage.encode())
 
                     print(self.username + ": " + outputMeassage)
 
