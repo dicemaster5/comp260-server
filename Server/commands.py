@@ -81,26 +81,42 @@ class Commands:
 
 # =================== Login Command Functions ========================= #
     def saltCheck(self, user, input):
-        # Send salt back to client
-        user.addToOutQueue("salt#" + self.SqlData.GetSalt(input[1]), True)
+        if self.SqlData.DoesUserAccountExist(input[1]):
+            # Send salt back to client
+            user.addToOutQueue("salt#" + self.SqlData.GetSalt(input[1]), True)
+        else:
+            user.addToOutQueue("Failed to login!\n"
+                               "UserAccount: " + input[1] + " does not exist.")
 
 # Help command displays all the commands the player can write
     def loginCommand(self, user, input):
+        alreadyLoggedIn = False
+
+        for u in self.users:
+            if u.username == input[1]:
+                alreadyLoggedIn = True
+
         # Check username and password
         if self.SqlData.Login(input[1], input[2]):
-            user.state = user.STATE_INGAME
+            if not alreadyLoggedIn:
+                user.state = user.STATE_INGAME
 
-            # add user to the ship
-            user.currentPlayer.currentRoom.players.append(user.currentPlayer)
-            user.addToOutQueue("YOU Have Logged in!")
-            user.addToOutQueue("loginAccepted", True)
-            user.addToOutQueue("updateUserName#" + user.username, True)
-            user.addToOutQueue("updatePlayerName#" + user.currentPlayer.playerName, True)
-            user.addToOutQueue("updateRoom#" + user.currentPlayer.currentRoom.name, True)
+                # add user to the ship
+                user.currentPlayer.currentRoom.players.append(user.currentPlayer)
+                user.addToOutQueue("YOU Have Logged in!")
+                user.addToOutQueue("loginAccepted", True)
+                user.username = input[1]
+                user.addToOutQueue("updateUserName#" + user.username, True)
+                user.addToOutQueue("updatePlayerName#" + user.currentPlayer.playerName, True)
+                user.addToOutQueue("updateRoom#" + user.currentPlayer.currentRoom.name, True)
 
 
-            # notifies everyone in game that a new player has joined
-            self.sendToEveryoneInGame(user.currentPlayer.playerName + " has joined the crew!")
+                # notifies everyone in game that a new player has joined
+                self.sendToEveryoneInGame(user.currentPlayer.playerName + " has joined the crew!")
+
+            else:
+                user.addToOutQueue("Failed to login!\n"
+                                   "There is already a user logged in with this account.")
         else:
             user.addToOutQueue("Failed to login!\n"
                                "Incorrect username or password.")

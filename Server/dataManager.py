@@ -22,6 +22,21 @@ class dataManager:
             print('Failed to add to DB')
             return False
 
+    def DoesUserAccountExist(self, userNameLogin):
+        try:
+            self.cursor.execute("SELECT userName FROM users WHERE userName == '" + userNameLogin + "'")
+            storedUserName = self.cursor.fetchone()[0]
+
+            if userNameLogin == storedUserName:
+                return True
+
+            else:
+                return False
+
+        except:
+            print('!ERROR WHEN TRYING TO LOGIN!')
+            return False
+
     def GetSalt(self, userNameLogin):
         try:
             self.cursor.execute("SELECT salt FROM users WHERE userName == '" + userNameLogin + "'")
