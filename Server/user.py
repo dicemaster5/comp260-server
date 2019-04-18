@@ -1,7 +1,14 @@
 from queue import *
+import time
+import json
 import threading
 import socket
 from player import player
+
+from base64 import b64decode, b64encode
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
 
 
 class user:
@@ -12,6 +19,7 @@ class user:
 
         # User vars
         self.clientID = ""
+        self.encryptionKey = b"HELLOWORLDEEEEEE"
         self.username = "USERNAME"
         self.currentPlayer = player(self, ship)
 
@@ -43,13 +51,47 @@ class user:
         else:
             self.outputQueue.put("dis:" + message)
 
+# ========================= ENCRYPTION CODE ====================== #
+    def encryptData(self, data):
+        print("Encrypting DATA")
+
+        dataa = data
+        key = self.encryptionKey
+        cipher = AES.new(key, AES.MODE_CBC)
+        ct_bytes = cipher.encrypt(pad(dataa, AES.block_size))
+        iv = b64encode(cipher.iv).decode('utf-8')
+        ct = b64encode(ct_bytes).decode('utf-8')
+
+        result = json.dumps({'iv': iv, 'ciphertext': ct})
+        print(result)
+        return result
+
+        #decryptData(result, key)
+
+    def decryptData(self, data, key):
+        print("Decrypting DATA")
+
+        try:
+            b64 = json.loads(data)
+            iv = b64decode(b64['iv'])
+            ct = b64decode(b64['ciphertext'])
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+
+            result = unpad(cipher.decrypt(ct), AES.block_size)
+            #print("The Encrypted text was: " + result.decode('utf-8'))
+            return result.decode('utf-8')
+
+        except:
+            print("Error decrypting!")
+
 # ========================= THREADING CODE ============================== #
     def receiveThread(self):
         print("receiveThread running")
         while self.canReceive:
             try:
                 data = self.clientSocket.recv(4096)
-                text = data.decode("utf-8")
+                decryptedData = self.decryptData(data, self.encryptionKey)
+                text = decryptedData
 
                 self.inputQueue.put(text)
 
@@ -60,16 +102,28 @@ class user:
     def sendingThread(self):
         print("sendingThread running")
         while self.canSend:
+            dataDict = {"time": time.ctime(), "message": ""}
+
             try:
                 if self.outputQueue.qsize() > 0:
                     # Get the output message to be sent
                     outputMeassage = self.outputQueue.get()
 
-                    # Send message to the player
-                    self.clientSocket.send(outputMeassage.encode())
+                    dataDict['message'] = outputMeassage
+                    jsonPacket = json.dumps(dataDict)
 
+                    header = len(jsonPacket).to_bytes(2, byteorder='little')
+
+                    # Send data packets to the player
+                    self.clientSocket.send(header)
+                    data = jsonPacket.encode()
                     print(self.username + ": " + outputMeassage)
+                    encryptedData = self.encryptData(data).encode("utf-8")
+                    #print(data)
+                    self.clientSocket.send(encryptedData)
+
 
             except socket.error:
                 self.canSend = False
                 print("sendingThread: ERROR - Lost client")
+

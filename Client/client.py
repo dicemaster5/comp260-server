@@ -1,10 +1,15 @@
 import sys
 import bcrypt
+import json
 import socket
 import threading
 import time
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
-from passlib.hash import pbkdf2_sha256
+
+from base64 import b64decode, b64encode
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
 
 clientIsRunning: bool = True
 
@@ -17,6 +22,8 @@ class ClientData:
         self.incomingMessage = ""
         self.currentBackgroundThread = None
         self.currentReceiveThread = None
+
+        self.encryptionKey = b"HELLOWORLDEEEEEE"
 
 
 clientData = ClientData()
@@ -90,9 +97,7 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         password = self.PassWordInput.text().encode('utf-8')
         salt = recSalt.encode('utf-8')
 
-        # do this
         password = bcrypt.hashpw(password, salt)
-
         password = password.decode()
 
         # Send Username and password across for checking
@@ -119,11 +124,72 @@ class QtWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.DisplayText("-- ERROR Please input a Username and Password that is longer than 3 chars --")
 
+
+# ================================ FUNCTIONS ===================================== #
+def encryptData(data):
+    print("Encrypting DATA")
+
+    dataa = data.encode()
+    key = clientData.encryptionKey
+    cipher = AES.new(key, AES.MODE_CBC)
+    ct_bytes = cipher.encrypt(pad(dataa, AES.block_size))
+    iv = b64encode(cipher.iv).decode('utf-8')
+    ct = b64encode(ct_bytes).decode('utf-8')
+
+    result = json.dumps({'iv':iv, 'ciphertext':ct})
+    #print(result)
+    return result
+
+    #decryptData(result, key)
+
+def decryptData(data, key):
+    #print("Decrypting DATA: " + data)
+
+    #try:
+    b64 = json.loads(data)
+    iv = b64decode(b64['iv'])
+    ct = b64decode(b64['ciphertext'])
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+
+    result = unpad(cipher.decrypt(ct), AES.block_size)
+    #print("The Encrypted text was: " + result.decode('utf-8'))
+    return result.decode('utf-8')
+
+    #except:
+    #    print("Error decrypting!")
+
 def sendFunction(newInput):
     if clientData.connectedToServer:
+        newInput = encryptData(newInput)
         clientData.serverSocket.send(newInput.encode())
     else:
         window.DisplayText("ERROR - Client is not connected to a server")
+
+def CheckReceivedData(data):
+    messageList = data.split(":", 1)
+
+    if messageList[0] == "dis":
+        # Display text received to the UI text box
+        window.DisplayText(messageList[1])
+
+    elif messageList[0] == "cmd":
+        commandlist = messageList[1].split("#",1)
+        if commandlist[0] == "salt":
+            window.SendSaltedPassword(commandlist[1])
+
+        if commandlist[0] == "loginAccepted":
+            window.loginWidget.hide()
+
+        if commandlist[0] == "updateUserName":
+            window.userNameBox.setText("USERNAME: " + commandlist[1])
+
+        if commandlist[0] == "updatePlayerName":
+            window.playerNameBox.setText("PLAYER NAME: " + commandlist[1])
+
+        if commandlist[0] == "updateRoom":
+            window.currentRoomBox.setText("CURRENT ROOM: " + commandlist[1])
+    else:
+        print(messageList)
 
 # ========================= THREADING CODE ====================== #
 
@@ -132,46 +198,29 @@ def receiveThread(clientData):
 
     while clientData.connectedToServer is True:
         try:
-            data = clientData.serverSocket.recv(4096)
-            text = ""
-            text += data.decode("utf-8")
-            clientDataLock.acquire()
-            clientData.incomingMessage += text
-            clientDataLock.release()
-            print("Text Received: " + text)
+            dataRecv = clientData.serverSocket.recv(2)
+            #print(dataRecv.decode('utf-8'))
 
-            textList = text.split(":", 1)
+            #dataRecv = decryptData(dataRecv, clientData.encryptionKey)
 
-            if textList[0] == "dis":
-                # Display text received to the UI text box
-                window.DisplayText(textList[1])
+            payloadSize = int.from_bytes(dataRecv, 'big')
+            #print(payloadSize)
+            payloadData = clientData.serverSocket.recv(payloadSize)
 
-            elif textList[0] == "cmd":
-                commandlist = textList[1].split("#")
-                if commandlist[0] == "salt":
-                    window.SendSaltedPassword(commandlist[1])
+            payloadData = decryptData(payloadData, clientData.encryptionKey)
 
-                if commandlist[0] == "loginAccepted":
-                    window.loginWidget.hide()
+            data = json.loads(payloadData)
 
-                if commandlist[0] == "updateUserName":
-                    window.userNameBox.setText("USERNAME: " + commandlist[1])
+            print("New Data received:" + data['time'] + "\nDATA:[" + data['message'] + "]")
 
-                if commandlist[0] == "updatePlayerName":
-                    window.playerNameBox.setText("PLAYER NAME: " + commandlist[1])
-
-                if commandlist[0] == "updateRoom":
-                    window.currentRoomBox.setText("CURRENT ROOM: " + commandlist[1])
-            else:
-                print(textList)
-                print(commandlist)
+            # Decrypts the data and checks the result
+            CheckReceivedData(data['message'])
 
         except socket.error:
             print("Server lost")
             window.DisplayText("Server lost")
             clientData.connectedToServer = False
             clientData.serverSocket = None
-
 
 def backgroundThread(clientData):
     print("backgroundThread running")
