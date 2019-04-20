@@ -14,6 +14,7 @@ from Crypto.Random import get_random_bytes
 class user:
     STATE_LOGIN = 0
     STATE_INGAME = 1
+    STATE_PLAYERSELECT = 2
     # ========================= Initialization CODE ====================== #
     def __init__(self, clientSocket, ship):
 
@@ -26,6 +27,7 @@ class user:
         self.inputQueue = Queue()
         self.outputQueue = Queue()
         self.clientSocket = clientSocket
+        self.clientIsConnected = True
 
         # User states
         self.state = user.STATE_LOGIN
@@ -63,7 +65,7 @@ class user:
         ct = b64encode(ct_bytes).decode('utf-8')
 
         result = json.dumps({'iv': iv, 'ciphertext': ct})
-        print(result)
+        print(data)
         return result
 
         #decryptData(result, key)
@@ -97,6 +99,7 @@ class user:
 
             except socket.error:
                 self.canReceive = False
+                self.clientIsConnected = False
                 print("receiveThread: ERROR - Lost client")
 
     def sendingThread(self):
@@ -119,11 +122,12 @@ class user:
                     data = jsonPacket.encode()
                     print(self.username + ": " + outputMeassage)
                     encryptedData = self.encryptData(data).encode("utf-8")
-                    #print(data)
-                    self.clientSocket.send(encryptedData)
 
+                    self.clientSocket.send(encryptedData)
+                    time.sleep(0.3)
 
             except socket.error:
                 self.canSend = False
+                self.clientIsConnected = False
                 print("sendingThread: ERROR - Lost client")
 

@@ -5,12 +5,11 @@ class dataManager:
         self.database = sqlite3.connect('ServerData.sql')
         self.cursor = self.database.cursor()
 
+# =================== Login/Accounts Functions ========================= #
     def AddAccount(self, userName, passWord, salt):
         try:
             self.cursor.execute("select * from  Users where userName == '" + userName + "'")
             rows = self.cursor.fetchall()
-
-            #hash = pbkdf2_sha256.encrypt(passWord, rounds=200000, salt_size=16)
 
             if len(rows) == 0:
                 self.cursor.execute('insert into Users(userName, passWord, salt) VALUES(?,?,?)', (userName, passWord, salt))
@@ -60,6 +59,51 @@ class dataManager:
 
         except:
             print('!ERROR WHEN TRYING TO LOGIN!')
+            return False
+
+
+# =================== Player Management Functions ========================= #
+    def ListPlayersOwned(self, username):
+        try:
+            self.cursor.execute("SELECT * FROM players WHERE owner == '" + username + "'")
+            playersOwned = self.cursor.fetchall()
+            return playersOwned
+
+            #for row in self.cursor:
+            #    playerName = self.cursor.getString(self.cursor.getColumnIndex('playerName'))
+
+        except:
+            print('!ERROR WHEN TRYING TO GET PLAYERS!')
+            return False
+
+    def CreateNewPlayer(self, username, playerName, startRoom):
+        try:
+            self.cursor.execute("SELECT * FROM players WHERE playerName == '" + playerName + "'")
+            rows = self.cursor.fetchall()
+
+            if len(rows) == 0:
+                self.cursor.execute('insert into players(playerName, owner, currentRoom) VALUES(?,?,?)',
+                                    (playerName, username, startRoom))
+                self.database.commit()
+                return True
+            else:
+                return False
+        except:
+            print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
+            return False
+
+    def PickPlayer(self, username, playerName):
+        try:
+            self.cursor.execute("SELECT * FROM players WHERE playerName == '" + playerName + "'" + " AND owner == '"
+                                + username + "'")
+            player = self.cursor.fetchone()
+
+            if player is not None:
+                return player
+            else:
+                return None
+        except:
+            print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
             return False
 
 # ================================================================================= #

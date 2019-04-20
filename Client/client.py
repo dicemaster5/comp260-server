@@ -9,7 +9,6 @@ from PyQt5 import QtCore, QtGui, uic, QtWidgets
 from base64 import b64decode, b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-from Crypto.Random import get_random_bytes
 
 clientIsRunning: bool = True
 
@@ -137,14 +136,10 @@ def encryptData(data):
     ct = b64encode(ct_bytes).decode('utf-8')
 
     result = json.dumps({'iv':iv, 'ciphertext':ct})
-    #print(result)
     return result
 
-    #decryptData(result, key)
-
 def decryptData(data, key):
-    #print("Decrypting DATA: " + data)
-
+    #print("Decrypting DATA: " + data.decode())
     #try:
     b64 = json.loads(data)
     iv = b64decode(b64['iv'])
@@ -155,8 +150,8 @@ def decryptData(data, key):
     #print("The Encrypted text was: " + result.decode('utf-8'))
     return result.decode('utf-8')
 
-    #except:
-    #    print("Error decrypting!")
+    #except Exception as err:
+    #   print("Error decrypting!" + err)
 
 def sendFunction(newInput):
     if clientData.connectedToServer:
@@ -198,13 +193,10 @@ def receiveThread(clientData):
 
     while clientData.connectedToServer is True:
         try:
-            dataRecv = clientData.serverSocket.recv(2)
-            #print(dataRecv.decode('utf-8'))
+            dataRecv = clientData.serverSocket.recv(4)
 
-            #dataRecv = decryptData(dataRecv, clientData.encryptionKey)
+            payloadSize = int.from_bytes(dataRecv, byteorder='big')
 
-            payloadSize = int.from_bytes(dataRecv, 'big')
-            #print(payloadSize)
             payloadData = clientData.serverSocket.recv(payloadSize)
 
             payloadData = decryptData(payloadData, clientData.encryptionKey)
