@@ -106,6 +106,33 @@ class dataManager:
             print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
             return False
 
+    def GetCurrentRoom(self, playerName):
+        try:
+            self.cursor.execute("SELECT currentRoom FROM players WHERE playerName == '" + playerName + "'")
+            playerRoom = self.cursor.fetchone()
+
+            if playerRoom is not None:
+                return playerRoom[0]
+            else:
+                return None
+        except:
+            print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
+            return False
+
+    def UpdatePlayerRoom(self, playerName, newRoom):
+        try:
+            self.cursor.execute("SELECT * FROM players WHERE playerName == '" + playerName + "'")
+            player = self.cursor.fetchone()
+
+            if player:
+                self.cursor.execute("UPDATE players SET currentRoom = '" + newRoom + "'" + " WHERE playerName == '" + playerName + "'")
+                self.database.commit()
+            else:
+                return None
+        except:
+            print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
+            return False
+
 # ================================================================================= #
     def createDatabase(self):
         self.createUserTable()

@@ -14,7 +14,7 @@ class Commands:
 
         self.gameCommands = {"help": lambda: self.helpCommand(self.currentUser),
                              "look": lambda: self.lookCommand(self.currentUser),
-                             "newname": lambda: self.newNameCommand(self.currentUser, self.Input),
+                             # "newname": lambda: self.newNameCommand(self.currentUser, self.Input),
                              "move": lambda: self.moveCommand(self.currentUser, self.Input),
                              "say": lambda: self.sayInRoomCommand(self.Input),
                              "radio": lambda: self.radioCommand(self.Input),
@@ -56,7 +56,7 @@ class Commands:
                             user.addToOutQueue("ERROR --INVALID COMMAND--")
 
                     # ----- Player Selection commands ------
-                    if user.state == user.STATE_PLAYERSELECT:
+                    elif user.state == user.STATE_PLAYERSELECT:
                         # splits up the input and makes it all lower case
                         self.Input = user.inputQueue.get().lower().split(" ", 1)
 
@@ -116,7 +116,6 @@ class Commands:
             user.addToOutQueue("Failed to login!\n"
                                "UserAccount: " + input[1] + " does not exist.")
 
-# Help command displays all the commands the player can write
     def loginCommand(self, user, input):
         alreadyLoggedIn = False
 
@@ -127,7 +126,6 @@ class Commands:
         # Check username and password
         if self.SqlData.Login(input[1], input[2]):
             if not alreadyLoggedIn:
-                user.state = user.STATE_PLAYERSELECT
 
                 user.addToOutQueue("YOU Have Logged in!")
                 user.addToOutQueue("loginAccepted", True)
@@ -153,28 +151,30 @@ class Commands:
 
 # =================== Player Select Command Functions ========================= #
     def EnterPlayerSelect(self, user):
-        user.addToOutQueue("\nWelcome to the player creation and selection section\n"
-                           "To create a new player type the command: newPlayer [NameOfPlayer]\n"
-                           "Or pick a currently existing player with the command: pick [NameOfPlayer]\n")
+        user.state = user.STATE_PLAYERSELECT
+        user.addToOutQueue("Welcome to the player creation and selection section\n"
+                           "\nTo create a new player type the command: newPlayer [NameOfPlayer]\n"
+                           "\nOr pick a currently existing player with the command: pick [NameOfPlayer]\n")
 
         self.DisplayAvailablePlayers(user)
 
     def DisplayAvailablePlayers(self, user):
-        user.addToOutQueue("These are the players you have created and can pick from to player with:")
+        user.addToOutQueue("These are the players you have created and can pick from to play with:")
         playerList = self.SqlData.ListPlayersOwned(user.username)
 
         if len(playerList) < 1:
-            user.addToOutQueue("    You do not yet own any player. create a new player with: newPlayer [NameOfPlayer]")
+            user.addToOutQueue("\n- You do not yet own any players.\n"
+                               "Create a new player with: newPlayer [NameOfPlayer]")
         else:
             for player in playerList:
                 user.addToOutQueue("- " + str(player[3]) + " in " + str(player[2]))
 
     def CreateNewPlayer(self, user, input):
-        user.addToOutQueue("\nYOU ARE TRYING TO CREATE A NEW PLAYER")
+        user.addToOutQueue("\nCreating new player...")
         if self.SqlData.CreateNewPlayer(user.username, input[1], "Main Deck"):
             user.addToOutQueue("New player " + input[1] + " has been created!")
         else:
-            user.addToOutQueue("There is already a player that exists with that name.")
+            user.addToOutQueue("ERROR - There is already a player that exists with that name.")
 
         self.DisplayAvailablePlayers(user)
 
@@ -193,17 +193,13 @@ class Commands:
         else:
             user.addToOutQueue("!-ERROR-!")
 
-
-        user.addToOutQueue("\nYOU HAVE PICKED A PLAYER TO PLAY AS")
-        print("YOU HAVE PICKED A PLAYER TO PLAY AS")
-
     def JoinGame(self, user):
         user.addToOutQueue("\nYOU ARE JOINING THE GAME...")
-        print("PLAYER IS NOW JOINING THE GAME!")
-
         user.state = user.STATE_INGAME
+        nameOfSavedRoom = self.SqlData.GetCurrentRoom(user.currentPlayer.playerName)
 
         # add user to the ship
+        user.currentPlayer.currentRoom = user.currentPlayer.currentSpaceShip.rooms[nameOfSavedRoom]
         user.currentPlayer.currentRoom.players.append(user.currentPlayer)
         user.addToOutQueue("updateRoom#" + user.currentPlayer.currentRoom.name, True)
 
@@ -220,7 +216,6 @@ class Commands:
             "help - lists all the commands\n"
             "say [words] - to say something to every other in the same room as you\n"
             "radio [words] - to say something to every other players\n"
-            "newname [name] - To change your name\n"
             "look - to get a description of the room you are currently in\n"
             "move [front, back, left, right] - to move in the room in the corresponding "
             "direction\n"
@@ -267,6 +262,7 @@ class Commands:
 
             # Move the player to the new Room
             self.currentPlayer.moveToRoom(self.ship.rooms[newRoom])
+            self.SqlData.UpdatePlayerRoom(self.currentPlayer.playerName, self.currentPlayer.currentRoom.name)
             user.addToOutQueue("You have moved to: " + self.currentPlayer.currentRoom.name)
 
             # announce that a player has entered a new room

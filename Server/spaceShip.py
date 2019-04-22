@@ -33,7 +33,7 @@ class ship:
         mainDeck = room()
         mainDeck.setRoom(
                         "Main Deck",
-                        {"front": "Cock Pit", "back":"Cargo Haul", "left":"Medical Room", "right":"Armory"},
+                        {"front": "Cock Pit", "back": "Cargo Haul", "left":"Medical Room", "right":"Armory"},
                         "You are standing in the main deck of the ship.\n"
                         "There are many terminals around you.")
 
