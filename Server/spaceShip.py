@@ -14,7 +14,7 @@ class room:
 class ship:
     def __init__(self):
         self.name = ""
-        self.position: (int, int)
+        self.position = 0
         self.rooms = {}
         self.players = []
 

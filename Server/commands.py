@@ -46,7 +46,8 @@ class Commands:
                     # ----- Login/Account commands ------
                     if user.state == user.STATE_LOGIN:
                         # splits up the input
-                        self.Input = user.inputQueue.get().split("#")
+                        self.Input = user.inputQueue.get()
+                        self.Input = self.Input.split("#")
 
                         if self.Input[0] in self.loginCommands:
                             self.loginCommands[self.Input[0]]()
@@ -61,10 +62,10 @@ class Commands:
                         self.Input = user.inputQueue.get().lower().split(" ", 1)
 
                         if self.Input[0] in self.playerSelectCommands:
-                            #try:
-                            self.playerSelectCommands[self.Input[0]]()
-                            #except Exception as err:
-                            #    user.addToOutQueue("ERROR --MISSING AN EXTRA INPUT--")
+                            try:
+                                self.playerSelectCommands[self.Input[0]]()
+                            except:
+                                user.addToOutQueue("ERROR --MISSING AN EXTRA INPUT--")
 
                         # If any input doesn't exist as a command
                         else:

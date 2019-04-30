@@ -1,9 +1,9 @@
 import sys
-import bcrypt
 import json
 import socket
 import threading
 import time
+import bcrypt
 from PyQt5 import QtCore, QtGui, uic, QtWidgets
 
 from base64 import b64decode, b64encode
@@ -195,9 +195,10 @@ def receiveThread(clientData):
         try:
             dataRecv = clientData.serverSocket.recv(4)
 
-            payloadSize = int.from_bytes(dataRecv, byteorder='big')
+            payloadSize = int.from_bytes(dataRecv, byteorder='little')
 
             payloadData = clientData.serverSocket.recv(payloadSize)
+            print(str(payloadSize))
 
             payloadData = decryptData(payloadData, clientData.encryptionKey)
 
@@ -227,6 +228,7 @@ def backgroundThread(clientData):
 
             if clientData.serverSocket is not None:
                 clientData.serverSocket.connect(("127.0.0.1", 8222))
+                #clientData.serverSocket.connect(("46.101.56.200", 9111))
 
             clientData.connectedToServer = True
             clientData.currentReceiveThread = threading.Thread(target=receiveThread, args=(clientData,))

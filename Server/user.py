@@ -74,17 +74,17 @@ class user:
         print("Decrypting DATA")
 
         try:
-            b64 = json.loads(data)
+            b64 = json.loads(data.decode())
             iv = b64decode(b64['iv'])
             ct = b64decode(b64['ciphertext'])
             cipher = AES.new(key, AES.MODE_CBC, iv)
 
             result = unpad(cipher.decrypt(ct), AES.block_size)
-            #print("The Encrypted text was: " + result.decode('utf-8'))
+            print("The Encrypted text was: " + result.decode('utf-8'))
             return result.decode('utf-8')
 
-        except:
-            print("Error decrypting!")
+        except Exception as err:
+            print("Error decrypting!" + err.args[0])
 
 # ========================= THREADING CODE ============================== #
     def receiveThread(self):
@@ -115,14 +115,15 @@ class user:
                     dataDict['message'] = outputMeassage
                     jsonPacket = json.dumps(dataDict)
 
-                    header = len(jsonPacket).to_bytes(2, byteorder='little')
 
-                    # Send data packets to the player
-                    self.clientSocket.send(header)
                     data = jsonPacket.encode()
                     print(self.username + ": " + outputMeassage)
                     encryptedData = self.encryptData(data).encode("utf-8")
 
+                    header = len(encryptedData).to_bytes(2, byteorder='little')
+
+                    # Send data packets to the player
+                    self.clientSocket.send(header)
                     self.clientSocket.send(encryptedData)
                     time.sleep(0.3)
 
