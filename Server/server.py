@@ -51,8 +51,8 @@ if __name__ == '__main__':
 
     mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    mySocket.bind(("127.0.0.1", 8222))
-    #mySocket.bind(("46.101.56.200", 9111))
+    #mySocket.bind(("127.0.0.1", 8222))
+    mySocket.bind(("46.101.56.200", 9111))
     mySocket.listen(5)
 
     acceptThread = threading.Thread(target=acceptThread, args=(mySocket, ))

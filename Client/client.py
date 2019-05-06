@@ -227,8 +227,8 @@ def backgroundThread(clientData):
                 clientData.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
             if clientData.serverSocket is not None:
-                clientData.serverSocket.connect(("127.0.0.1", 8222))
-                #clientData.serverSocket.connect(("46.101.56.200", 9111))
+                #clientData.serverSocket.connect(("127.0.0.1", 8222))
+                clientData.serverSocket.connect(("46.101.56.200", 9111))
 
             clientData.connectedToServer = True
             clientData.currentReceiveThread = threading.Thread(target=receiveThread, args=(clientData,))
