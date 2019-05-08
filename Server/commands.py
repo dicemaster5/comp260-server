@@ -1,6 +1,4 @@
 from dataManager import dataManager
-import time
-
 
 class Commands:
     def __init__(self, users, spaceShip):
@@ -18,7 +16,11 @@ class Commands:
                              "move": lambda: self.moveCommand(self.currentUser, self.Input),
                              "say": lambda: self.sayInRoomCommand(self.Input),
                              "radio": lambda: self.radioCommand(self.Input),
-                             "shipname": lambda: self.shipNameCommand(self.currentUser)
+                             "shipname": lambda: self.shipNameCommand(self.currentUser),
+                             "take": lambda: self.takeItemCommand(self.currentUser, self.Input),
+                             "drop": lambda: self.dropItemCommand(self.currentUser, self.Input),
+                             "inventory": lambda: self.showInventoryCommand(self.currentUser),
+                             "items": lambda: self.showItemsInRoom(self.currentUser)
                              }
 
         self.playerSelectCommands = {
@@ -64,7 +66,8 @@ class Commands:
                         if self.Input[0] in self.playerSelectCommands:
                             try:
                                 self.playerSelectCommands[self.Input[0]]()
-                            except:
+                            except Exception as err:
+                                print(err)
                                 user.addToOutQueue("ERROR --MISSING AN EXTRA INPUT--")
 
                         # If any input doesn't exist as a command
@@ -81,6 +84,7 @@ class Commands:
                                     self.gameCommands[self.Input[0]]()
                                 except Exception as err:
                                     user.addToOutQueue("ERROR --MISSING AN EXTRA INPUT--")
+                                    print(err)
 
                             # If any input doesn't exist as a command
                             else:
@@ -203,6 +207,8 @@ class Commands:
         user.currentPlayer.currentRoom = user.currentPlayer.currentSpaceShip.rooms[nameOfSavedRoom]
         user.currentPlayer.currentRoom.players.append(user.currentPlayer)
         user.addToOutQueue("updateRoom#" + user.currentPlayer.currentRoom.name, True)
+        user.currentPlayer.inventory = self.SqlData.GetPlayerInventory(user.currentPlayer.playerName)
+
 
         # notifies everyone in game that a new player has joined
         self.sendToEveryoneInGame(user.currentPlayer.playerName + " has joined the crew!")
@@ -213,15 +219,18 @@ class Commands:
     def helpCommand(self, player):
         player.addToOutQueue(
             "\n"
-            "----------- COMMANDS LIST -----------\n"
+            "------------ COMMANDS LIST ------------\n"
             "help - lists all the commands\n"
             "say [words] - to say something to every other in the same room as you\n"
             "radio [words] - to say something to every other players\n"
             "look - to get a description of the room you are currently in\n"
-            "move [front, back, left, right] - to move in the room in the corresponding "
-            "direction\n"
+            "move [front, back, left, right] - to move in the room in the corresponding direction\n"
             "shipname - will return the name of the Space ship\n"
-            "-------------------------------------\n"
+            "take [item] - will take the item and put it in your inventory\n"
+            "drop [item] - will drop the item from your inventory on to the floor of the room you are in\n"
+            "inventory - will show you what you are holding in your inventory\n"
+            "items - will show you what items you can pick up from the room\n"
+            "--------------------------------------\n"
         )
 
     # Command that tells the player the name of the ship
@@ -277,3 +286,55 @@ class Commands:
 
         else:
             user.addToOutQueue("-- There is no room to move to in this direction --")
+
+    def takeItemCommand(self, user, Input):
+        print("YOU TOOK AN ITEM!")
+        player = user.currentPlayer
+
+        playerInventory = self.SqlData.GetPlayerInventory(player.playerName)
+        roomInventory = self.SqlData.GetRoomInventory(player.currentRoom.name)
+        if Input[1] in roomInventory:
+            player.addItemToinventory(Input[1])
+            roomInventory.remove(Input[1])
+            self.SqlData.UpdateRoomInventory(player.currentRoom.name, roomInventory)
+            playerInventory = player.inventory
+            self.SqlData.UpdatePlayerInventory(player.playerName, playerInventory)
+
+            user.addToOutQueue("You picked up the " + Input[1] + " and put it in your inventory")
+        else:
+            user.addToOutQueue("No such thing as a " + Input[1] + " in this room")
+
+
+    def dropItemCommand(self, user, Input):
+        print("player dropped AN ITEM!")
+        player = user.currentPlayer
+
+        playerInventory = self.SqlData.GetPlayerInventory(player.playerName)
+        roomInventory = self.SqlData.GetRoomInventory(player.currentRoom.name)
+        if Input[1] in player.inventory:
+            player.removeItemFrominventory(Input[1])
+            player.currentRoom.addItemToRoom(Input[1])
+            roomInventory.append(Input[1])
+
+            self.SqlData.UpdateRoomInventory(player.currentRoom.name, roomInventory)
+            playerInventory = player.inventory
+            self.SqlData.UpdatePlayerInventory(player.playerName, playerInventory)
+
+            user.addToOutQueue("You dropped the " + Input[1] + " onto the floor")
+        else:
+            user.addToOutQueue("No such thing as a " + Input[1] + " in your inventory")
+
+    def showInventoryCommand(self, user):
+        print("Showing inventory to player " + self.currentPlayer.playerName)
+        player = user.currentPlayer
+
+        if len(player.inventory) > 0:
+            user.addToOutQueue("The items you hold in your inventory:" + str(self.currentPlayer.inventory))
+        else:
+            user.addToOutQueue("Your inventory is currently empty :(")
+
+    def showItemsInRoom(self, user):
+        player = user.currentPlayer
+        roomItems = self.SqlData.GetRoomInventory(player.currentRoom.name)
+        user.addToOutQueue("The items in the room that you can take are: " + str(roomItems))
+

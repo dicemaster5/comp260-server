@@ -9,9 +9,15 @@ class player:
         self.currentSpaceShip = spaceShip
         self.currentRoom = self.currentSpaceShip.rooms["Main Deck"]
         self.health = 100
-        self.inventory = {}
+        self.inventory = []
 
 # ========================= PLAYER FUNCTIONS CODE ====================== #
     # Moves the player to a new room
     def moveToRoom(self, newRoom):
         self.currentRoom = newRoom
+
+    def addItemToinventory(self, item):
+        self.inventory.append(item)
+
+    def removeItemFrominventory(self, item):
+        self.inventory.remove(item)

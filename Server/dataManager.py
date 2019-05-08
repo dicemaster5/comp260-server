@@ -1,4 +1,6 @@
 import sqlite3
+import json
+import ast
 
 class dataManager:
     def __init__(self):
@@ -82,14 +84,14 @@ class dataManager:
             rows = self.cursor.fetchall()
 
             if len(rows) == 0:
-                self.cursor.execute('insert into players(playerName, owner, currentRoom) VALUES(?,?,?)',
-                                    (playerName, username, startRoom))
+                self.cursor.execute('insert into players(playerName, owner, currentRoom, playerInventory) VALUES(?,?,?,?)',
+                                    (playerName, username, startRoom, json.dumps([])))
                 self.database.commit()
                 return True
             else:
                 return False
-        except:
-            print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
+        except Exception as err:
+            print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!:  ' + err)
             return False
 
     def PickPlayer(self, username, playerName):
@@ -133,14 +135,67 @@ class dataManager:
             print('!ERROR WHEN TRYING TO CREATE A NEW PLAYER!')
             return False
 
-# ================================================================================= #
+    def GetRoomInventory(self, currentRoom):
+        self.cursor.execute("SELECT roomInventory FROM rooms WHERE roomName == '" + currentRoom + "'")
+        roomInventory = self.cursor.fetchone()
+        return ast.literal_eval(roomInventory[0])
+
+    def UpdateRoomInventory(self, currentRoom, newInventory):
+        self.cursor.execute("SELECT * FROM rooms WHERE roomName == '" + currentRoom + "'")
+        room = self.cursor.fetchone()
+        if room:
+            self.cursor.execute("UPDATE rooms SET roomInventory = '" + json.dumps(newInventory) + "'" + " WHERE roomName == '" + currentRoom + "'")
+            self.database.commit()
+
+    def GetPlayerInventory(self, playerName):
+        self.cursor.execute("SELECT playerInventory FROM players WHERE playerName == '" + playerName + "'")
+        playerInventory = self.cursor.fetchone()
+        return ast.literal_eval(playerInventory[0])
+
+    def UpdatePlayerInventory(self, currentRoom, newInventory):
+        self.cursor.execute("SELECT * FROM players WHERE playerName == '" + currentRoom + "'")
+        room = self.cursor.fetchone()
+        if room:
+            self.cursor.execute("UPDATE players SET playerInventory = '" + json.dumps(newInventory) + "'" + " WHERE playerName == '" + currentRoom + "'")
+            self.database.commit()
+
+    # ================================================================================= #
     def createDatabase(self):
         self.createUserTable()
         self.createPlayerTable()
         self.createSpaceShipTable()
         self.createRoomsTable()
+        #self.createSetRooms()
         print("Database setup")
 
+    def createSetRooms(self):
+        self.createRoom("Cock Pit",
+                        "You are in the main controls room.\n"
+                        "The pilot seat is at the front with many control panels surrounding it.\n"
+                        "From here you can control and navigate the ship.",
+                        ["book", "shrimp crackers", "pilot's hat"]
+                        )
+        self.createRoom("Main Deck",
+                        "You are standing in the main deck of the ship.\n"
+                        "There are many terminals around you.",
+                        ["dinosaur figure"]
+                        )
+        self.createRoom("Medical Room",
+                        "You are in the Medical room.\n"
+                        "There are medical kits, band aides and red syringes in the room alongside a operation table",
+                        ["medical kit", "band aide", "red syringe"]
+                        )
+        self.createRoom("Cargo Haul",
+                        "You are in the Cargo Haul of the ship.\n"
+                        "There are all sorts of worthless treasures in here.",
+                        ["old alien relic", "locked box", "moldy banana"]
+                        )
+        self.createRoom("Armory",
+                        "You are in the Armory.\n"
+                        "There are laser rifles and plasma guns hanging on the walls.\n"
+                        "you also notice a box withe the words -CAUTION EXPLOSIVES- on the side of it.",
+                        ["laser rifle", "plasma gun", "thermal detonator", "hunting knife"]
+                        )
 
     # Create table to store all users
     def createUserTable(self):
@@ -156,12 +211,13 @@ class dataManager:
     # Create table to store all players
     def createPlayerTable(self):
         self.cursor.execute('''
-                        CREATE TABLE IF NOT EXISTS players(
-                        id INTEGER PRIMARY KEY, 
-                        owner TEXT, 
-                        currentRoom TEXT, 
-                        playerName TEXT)
-                        ''')
+                                CREATE TABLE IF NOT EXISTS players(
+                                id INTEGER PRIMARY KEY, 
+                                owner TEXT, 
+                                currentRoom TEXT, 
+                                playerName TEXT,
+                                playerInventory TEXT)
+                                ''')
         # commit the change
         self.database.commit()
 
@@ -183,8 +239,16 @@ class dataManager:
         self.cursor.execute('''
                             CREATE TABLE IF NOT EXISTS rooms(
                             roomName TEXT PRIMARY KEY,
-                            roomDescription TEXT
+                            roomDescription TEXT,
+                            roomInventory TEXT
                             )
                             ''')
         # commit the change
+        self.database.commit()
+
+    # Creates a room with specific values
+    def createRoom(self, roomName, roomDescription, roomInventory):
+        roomInventory = json.dumps(roomInventory)
+        self.cursor.execute('INSERT OR REPLACE into rooms(roomName, roomDescription, roomInventory) VALUES(?,?,?)',
+                            (roomName, roomDescription, roomInventory))
         self.database.commit()

@@ -8,8 +8,6 @@ from player import player
 from base64 import b64decode, b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
-from Crypto.Random import get_random_bytes
-
 
 class user:
     STATE_LOGIN = 0
@@ -31,8 +29,6 @@ class user:
 
         # User states
         self.state = user.STATE_LOGIN
-        #self.loginState = False
-        #self.gameState = False
 
         self.canReceive = True
         self.canSend = True

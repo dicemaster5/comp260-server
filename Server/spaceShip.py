@@ -3,13 +3,21 @@ class room:
         self.name = ""
         self.description = ""
         self.players = []
-        self.interactables = {}
         self.connectedRooms = {}
+        self.inventory = []
 
-    def setRoom(self, roomName, rooms, description):
+    def setRoom(self, roomName, rooms, description, items=[]):
         self.name = roomName
         self.connectedRooms = rooms
         self.description = description
+        self.inventory = items
+
+    def addItemToRoom(self, item):
+        self.inventory.append(item)
+
+    def removeItemFromRoom(self, item):
+        self.inventory.remove(item)
+
 
 class ship:
     def __init__(self):
@@ -28,28 +36,32 @@ class ship:
                         {"back": "Main Deck"},
                         "You are in the main controls room.\n"
                         "The pilot seat is at the front with many control panels surrounding it.\n"
-                        "From here you can control and navigate the ship.")
+                        "From here you can control and navigate the ship.",
+                        [])
 
         mainDeck = room()
         mainDeck.setRoom(
                         "Main Deck",
-                        {"front": "Cock Pit", "back": "Cargo Haul", "left":"Medical Room", "right":"Armory"},
+                        {"front": "Cock Pit", "back": "Cargo Haul", "left": "Medical Room", "right": "Armory"},
                         "You are standing in the main deck of the ship.\n"
-                        "There are many terminals around you.")
+                        "There are many terminals around you.",
+                        [])
 
         cargoHaul = room()
         cargoHaul.setRoom(
                         "Cargo Haul",
                         {"front": "Main Deck"},
                         "You are in the Cargo Haul of the ship.\n"
-                        "There are all sorts of worthless treasures in here.")
+                        "There are all sorts of worthless treasures in here.",
+                        [])
 
         medicRoom = room()
         medicRoom.setRoom(
                         "Medical Room",
                         {"right": "Main Deck"},
                         "You are in the Medical room.\n"
-                        "There are medical kits and beds in the room.")
+                        "There are medical kits, band aides and red syringes in the room alongside a operation table",
+                        ["medical kit", "band aide", "red syringe"])
 
         Armory = room()
         Armory.setRoom(
@@ -57,6 +69,7 @@ class ship:
                         {"left": "Main Deck"},
                         "You are in the Armory.\n"
                         "There are laser rifles and plasma guns hanging on the walls.\n"
-                        "you also notice a box withe the words -CAUTION EXPLOSIVES- on the side of it.")
+                        "you also notice a box withe the words -CAUTION EXPLOSIVES- on the side of it.",
+                        [])
 
         self.rooms = {"Cock Pit": cockPit, "Main Deck": mainDeck, "Cargo Haul": cargoHaul, "Medical Room": medicRoom, "Armory": Armory}
